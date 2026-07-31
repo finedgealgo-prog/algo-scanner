@@ -1,0 +1,19 @@
+curl 'https://api.algotest.in/execution/v2/start' \
+  -H 'accept: application/json, text/plain, */*' \
+  -H 'accept-language: en-US,en;q=0.9,ta;q=0.8' \
+  -H 'cache-control: no-cache' \
+  -H 'content-type: application/json' \
+  -b '_fbp=fb.1.1742824225846.441183240522633121; _fbc=fb.1.1747493444754.IwZXh0bgNhZW0BMABhZGlkAasi5Bo0GcABHt7UgDn1wt6MRuk5GZH1yWcsiZchP7S153stlnT-Z7f4dQbTNiEcyx5Bx5FA_aem_6XpfZrC5ysFUwrhTQd0L-A; ajs_anonymous_id=645368f2-9539-4963-a84b-8524ab1b484f; ajs_user_id=638b83f9d7f7b877201ddced; ph_phc_H24CptSR6nBSVJ8nYCloSyDfhCk8DP22HBgC9qSwHPr_posthog=%7B%22distinct_id%22%3A%22638b83f9d7f7b877201ddced%22%2C%22%24sesid%22%3A%5Bnull%2Cnull%2Cnull%5D%2C%22%24epp%22%3Atrue%2C%22%24initial_person_info%22%3A%7B%22r%22%3A%22https%3A%2F%2Falgotest.in%2F%22%2C%22u%22%3A%22https%3A%2F%2Falgotest.in%2Flogin%22%7D%7D; _gcl_au=1.1.267873170.1773909017; _gid=GA1.2.799941076.1775287984; _ga_MS6Z4BR=GS2.1.s1775535266$o43$g0$t1775535266$j60$l0$h0; _ga_N11XQ3TYSG=GS2.1.s1775535266$o41$g0$t1775535266$j60$l0$h0; _clck=1j7h7td%5E2%5Eg51%5E0%5E1909; access_token_cookie=eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc3NTYwODgyOSwianRpIjoiZjk1MzMzMjktNDE1Yy00ZTZiLTkzMDUtYWE2OGViMzVhMWY4IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjYzOGI4M2Y5ZDdmN2I4NzcyMDFkZGNlZCIsIm5iZiI6MTc3NTYwODgyOSwiY3NyZiI6ImZiMGM5ZTc4LTQ4MTYtNDU1Yy05M2MyLTAyOTQzZTcwYjk4NiIsImV4cCI6MTc3NTg2ODAyOX0.WtHyrUHdxdnXDgXiTxwOczpdhtAY-GjT_sHDhWbqPd0Js3FZKtlanBlOHEyxIP2CVw5LGPCtmbO6XAunptnw_UBFs36qRhXZFThUoynk-hMyh9pjnlA5Fm4pwMM7mPYtRbYh6K9jub7C4agWC0T0ji-Z5aggouz0hrND-34eZn4wop_SojZvAUcON2xOOAI03bdq0MwsqGctm_Qdf6kReZRHL7qfI72hOBBtXIApzkAadufyqBMVnCIS_qDiisjbC-yZr1YxcQIhq84rb_Q8gtxBjCYdLihcr-mpNfx20uFtcrea-Qx2JeFfZPfDm4l2O_rYXcYHEYfim5JZGkJg-i_C_WirITKLoE9wgBqqlK6ze4RdH2ZWiBMUxbp2yUHdA1huQ5W2TDzLmYuoYaHv8XHO0YOThUcHGQ2lNipTKMshBtIbRbLCXiX1Rsj0vgpdEyKvBd690HLIYfCuAbXLQcGzktgJAhr69y0QCreGX0xUNYPoZ_6-D2MkCDNFrKEt; csrf_access_token=fb0c9e78-4816-455c-93c2-02943e70b986; mp_f7c3d9535820295f2d256c66e7c13599_mixpanel=%7B%22distinct_id%22%3A%22638b83f9d7f7b877201ddced%22%2C%22%24device_id%22%3A%2219745a5b1e27b7-06423c7e45c77d-16462c6e-1fa400-19745a5b1e27b7%22%2C%22%24initial_referrer%22%3A%22https%3A%2F%2Falgotest.in%2Fbacktest%22%2C%22%24initial_referring_domain%22%3A%22algotest.in%22%2C%22__mps%22%3A%7B%7D%2C%22__mpso%22%3A%7B%7D%2C%22__mpus%22%3A%7B%7D%2C%22__mpa%22%3A%7B%7D%2C%22__mpu%22%3A%7B%7D%2C%22__mpr%22%3A%5B%5D%2C%22__mpap%22%3A%5B%5D%2C%22%24user_id%22%3A%22638b83f9d7f7b877201ddced%22%2C%22%24search_engine%22%3A%22google%22%2C%22utm_source%22%3A%22documentation%22%2C%22utm_medium%22%3A%22internal%22%2C%22utm_campaign%22%3A%22seo%22%2C%22utm_content%22%3A%22feature%22%2C%22utm_term%22%3A%22heatmap%22%7D; _ga=GA1.1.154747863.1742805321; _uetsid=8483eef02ff811f1903c2da344161480; _clsk=sf89x0%5E1775628511066%5E11%5E1%5Ej.clarity.ms%2Fcollect; _ga_Y0EK98JRBT=GS2.1.s1775626792$o694$g1$t1775628511$j50$l0$h0' \
+  -H 'origin: https://algotest.in' \
+  -H 'pragma: no-cache' \
+  -H 'priority: u=1, i' \
+  -H 'referer: https://algotest.in/' \
+  -H 'sec-ch-ua: "Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "Linux"' \
+  -H 'sec-fetch-dest: empty' \
+  -H 'sec-fetch-mode: cors' \
+  -H 'sec-fetch-site: same-site' \
+  -H 'user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36' \
+  -H 'x-csrf-token-access: fb0c9e78-4816-455c-93c2-02943e70b986' \
+  --data-raw '{"strategies":{"67f26927ed7d441e6c0017a5":{"entry_time":"2026-04-08T09:22:59","exit_time":"2026-04-08T15:24:59","reentry_time_restriction":null,"is_shared":false,"name":"NIFTY-Adj-1-62-points"}},"execution_type":"live","brokers":{"69cc8d70340c73617178943d":1},"portfolio":{"id":"67f26956d4de092a17075f23","name":"Chan sensex all 4 stra (3)"}}'

@@ -1,0 +1,34 @@
+{
+    "ltp": [
+        {
+            "token": "NSE_54812",
+            "timestamp": "2026-04-08T11:16:16.248000",
+            "ltp": 214.95,
+            "bb_qty": 260,
+            "bb_price": 214.75,
+            "ba_qty": 195,
+            "ba_price": 214.8,
+            "vol_in_day": 83732415
+        },
+        {
+            "token": "NSE_54815",
+            "timestamp": "2026-04-08T11:16:15",
+            "ltp": 210.85,
+            "bb_qty": 455,
+            "bb_price": 211,
+            "ba_qty": 195,
+            "ba_price": 211.4,
+            "vol_in_day": 32493825
+        },
+        {
+            "token": "NSE_0",
+            "timestamp": "2026-04-08T11:16:16",
+            "ltp": 24002.35,
+            "bb_qty": 0,
+            "bb_price": 0,
+            "ba_qty": 0,
+            "ba_price": 0,
+            "vol_in_day": 0
+        }
+    ]
+}

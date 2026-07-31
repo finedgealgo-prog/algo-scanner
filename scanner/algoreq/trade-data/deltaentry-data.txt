@@ -1,0 +1,47 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  [BROKER GROUP]  broker=69e48851208378407e72bf95  |  mode=fast-forward  |  user=69dcf52711877c164638d2a7
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[BROKER TICK] {'mode': 'fast-forward', 'timestamp': '2026-04-28T15:26:21', 'ticks_received': 5, 'running_trades': 1, 'subscribe_count': 0, 'actions': [], 'hit_trades': []}
+[FF OPTION SUBSCRIBE] token=18498818
+[FF SPOT SNAPSHOT] mode=fast-forward ticker=NIFTY quote_enabled=False source=socket instrument=NSE:NIFTY 50 spot_price=23968.7 atm_price=23950
+[FF ENTRY SNAPSHOT] trade=exec_19dd3848800882bcd89 leg=k49do8lv underlying=NIFTY spot_price=23968.7 atm_price=23950 strike=23950 option=CE expiry=2026-04-28 token=18498818 symbol=NIFTY26APR23950CE ltp=43.1 ltp_source=quote entry_kind=EntryType.EntryByPremiumCloseToStraddle
+[PENDING ENTRY QUEUED] trade=exec_19dd3848800882bcd89 leg=k49do8lv leg_type=leg_1 reentry_type=- is_lazy=False mode=fast-forward
+[FF SPOT SNAPSHOT] mode=fast-forward ticker=NIFTY quote_enabled=False source=socket instrument=NSE:NIFTY 50 spot_price=23997.5 atm_price=24000
+[FF ENTRY SNAPSHOT] trade=exec_19dd3848800882bcd89 leg=ttx2772l underlying=NIFTY spot_price=23997.5 atm_price=24000 strike=NOT_FOUND option=PE expiry=2026-04-28 token=NOT_FOUND symbol=- ltp=0.0 ltp_source=delta_entry_pending entry_kind=EntryType.EntryByDeltaRange
+[PENDING ENTRY QUEUED] trade=exec_19dd3848800882bcd89 leg=ttx2772l leg_type=leg_2 reentry_type=- is_lazy=False mode=fast-forward
+[BACKTEST ENTRY] trade_id=exec_19dd3848800882bcd89 strategy=NIFTY-0DTE-10-45-1-NO-DELTA-2 - 73203 entry_time=10:45:59 original_legs_queued=true
+[KITE TICK STREAM] modes=fast-forward subscribed_total=6 spot_subscribed=5 option_subscribed=1 spot_tokens=[NIFTY, BANKNIFTY, FINNIFTY, SENSEX, MIDCPNIFTY] option_tokens=[NIFTY26APR23950CE] tick_batch=[FINNIFTY(257801)=25916.95; MIDCPNIFTY(288009)=13993.75; BANKNIFTY(260105)=55382.35; NIFTY(256265)=23997.50]
+[STRIKE CALC] leg=k49do8lv type=CE spot_price=23997.5 mode=fast-forward source=fast_forward_event
+[ENTRY PRICE SOURCE] trade_id=exec_19dd3848800882bcd89 leg=k49do8lv mode=fast-forward source=quote token=18498818 symbol=NIFTY26APR23950CE price=43.2
+[POSITION ENTRY] trade=exec_19dd3848800882bcd89 leg=k49do8lv entry=2026-04-28 15:26:21 history_id=69f0844582660425e91aa674
+[ENTRY FEATURE SEED] {'trade_id': 'exec_19dd3848800882bcd89', 'leg_id': 'k49do8lv', 'history_leg_id': '69f0844582660425e91aa674', 'sl_enabled': True, 'target_enabled': True, 'trail_enabled': True, 'momentum_type': 'None'}
+[LAZY LEG ENTRY SYNC] trade=exec_19dd3848800882bcd89 leg=k49do8lv history_id=69f0844582660425e91aa674
+[BACKTEST ENTRY] trade_id=exec_19dd3848800882bcd89 strategy=NIFTY-0DTE-10-45-1-NO-DELTA-2 - 73203 entry_time=10:45:59 leg_id=k49do8lv entered=True reason=- listen_time=15:26:21
+[ENTRY FAILED CLEANUP] leg object removed from legs: trade=exec_19dd3848800882bcd89 leg=k49do8lv
+[ENTRY ERROR LOG] db write failed: local variable 'option_type' referenced before assignment
+[FF OPTION SUBSCRIBE] token=18499586
+[FF SPOT SNAPSHOT] mode=fast-forward ticker=NIFTY quote_enabled=False source=socket instrument=NSE:NIFTY 50 spot_price=23997.5 atm_price=24000
+[FF ENTRY SNAPSHOT] trade=exec_19dd3848800882bcd89 leg=ttx2772l underlying=NIFTY spot_price=23997.5 atm_price=24000 strike=24000 option=PE expiry=2026-04-28 token=18499586 symbol=NIFTY26APR24000PE ltp=7.15 ltp_source=quote entry_kind=EntryType.EntryByStrikeType
+[KITE TICK STREAM] modes=fast-forward subscribed_total=7 spot_subscribed=5 option_subscribed=2 spot_tokens=[NIFTY, BANKNIFTY, FINNIFTY, SENSEX, MIDCPNIFTY] option_tokens=[NIFTY26APR23950CE, NIFTY26APR24000PE] tick_batch=[BANKNIFTY(260105)=55382.35; NIFTY26APR23950CE(18498818)=43.20; FINNIFTY(257801)=25916.95; MIDCPNIFTY(288009)=13993.75]
+[BROKER TICK] {'mode': 'fast-forward', 'timestamp': '2026-04-28T15:26:22', 'ticks_received': 4, 'running_trades': 0, 'subscribe_count': 0, 'actions': [], 'hit_trades': []}
+[STRIKE CALC] leg=ttx2772l type=PE spot_price=23997.5 mode=fast-forward source=fast_forward_event
+2026-04-28 15:26:22  INFO      features.kite_broker_ws              [kite_broker_ws] common credentials set api_key=h283rtgbdfbdwr3f
+[KITE TICK STREAM] modes=fast-forward subscribed_total=7 spot_subscribed=5 option_subscribed=2 spot_tokens=[NIFTY, BANKNIFTY, FINNIFTY, SENSEX, MIDCPNIFTY] option_tokens=[NIFTY26APR23950CE, NIFTY26APR24000PE] tick_batch=[NIFTY26APR24000PE(18499586)=7.15; MIDCPNIFTY(288009)=13992.85; BANKNIFTY(260105)=55376.40; NIFTY(256265)=23997.90; SENSEX(265)=76894.99]
+[KITE TICK STREAM] modes=fast-forward subscribed_total=7 spot_subscribed=5 option_subscribed=2 spot_tokens=[NIFTY, BANKNIFTY, FINNIFTY, SENSEX, MIDCPNIFTY] option_tokens=[NIFTY26APR23950CE, NIFTY26APR24000PE] tick_batch=[FINNIFTY(257801)=25913.95; BANKNIFTY(260105)=55376.40; NIFTY(256265)=23998.05]
+[BROKER TICK] {'mode': 'fast-forward', 'timestamp': '2026-04-28T15:26:22', 'ticks_received': 5, 'running_trades': 0, 'subscribe_count': 0, 'actions': [], 'hit_trades': []}
+[KITE TICK STREAM] modes=fast-forward subscribed_total=7 spot_subscribed=5 option_subscribed=2 spot_tokens=[NIFTY, BANKNIFTY, FINNIFTY, SENSEX, MIDCPNIFTY] option_tokens=[NIFTY26APR23950CE, NIFTY26APR24000PE] tick_batch=[NIFTY26APR24000PE(18499586)=7.15; MIDCPNIFTY(288009)=13992.20; BANKNIFTY(260105)=55383.95; NIFTY(256265)=23998.05; FINNIFTY(257801)=25916.15]
+[KITE TICK STREAM] modes=fast-forward subscribed_total=7 spot_subscribed=5 option_subscribed=2 spot_tokens=[NIFTY, BANKNIFTY, FINNIFTY, SENSEX, MIDCPNIFTY] option_tokens=[NIFTY26APR23950CE, NIFTY26APR24000PE] tick_batch=[FINNIFTY(257801)=25916.15; MIDCPNIFTY(288009)=13992.20; BANKNIFTY(260105)=55383.95; NIFTY26APR23950CE(18498818)=43.05]
+[BROKER TICK] {'mode': 'fast-forward', 'timestamp': '2026-04-28T15:26:23', 'ticks_received': 4, 'running_trades': 0, 'subscribe_count': 0, 'actions': [], 'hit_trades': []}
+[KITE TICK STREAM] modes=fast-forward subscribed_total=7 spot_subscribed=5 option_subscribed=2 spot_tokens=[NIFTY, BANKNIFTY, FINNIFTY, SENSEX, MIDCPNIFTY] option_tokens=[NIFTY26APR23950CE, NIFTY26APR24000PE] tick_batch=[MIDCPNIFTY(288009)=13993.35; BANKNIFTY(260105)=55388.95; NIFTY(256265)=23998.60; SENSEX(265)=76892.00; FINNIFTY(257801)=25918.95; NIFTY26APR24000PE(18499586)=7.05]
+[KITE TICK STREAM] modes=fast-forward subscribed_total=7 spot_subscribed=5 option_subscribed=2 spot_tokens=[NIFTY, BANKNIFTY, FINNIFTY, SENSEX, MIDCPNIFTY] option_tokens=[NIFTY26APR23950CE, NIFTY26APR24000PE] tick_batch=[NIFTY26APR24000PE(18499586)=7.05; NIFTY26APR23950CE(18498818)=43.10; NIFTY(256265)=23997.80]
+[BROKER TICK] {'mode': 'fast-forward', 'timestamp': '2026-04-28T15:26:23', 'ticks_received': 3, 'running_trades': 0, 'subscribe_count': 0, 'actions': [], 'hit_trades': []}
+[KITE TICK STREAM] modes=fast-forward subscribed_total=7 spot_subscribed=5 option_subscribed=2 spot_tokens=[NIFTY, BANKNIFTY, FINNIFTY, SENSEX, MIDCPNIFTY] option_tokens=[NIFTY26APR23950CE, NIFTY26APR24000PE] tick_batch=[FINNIFTY(257801)=25915.40; MIDCPNIFTY(288009)=13992.05; BANKNIFTY(260105)=55387.15; NIFTY(256265)=23997.80]
+[BROKER TICK] {'mode': 'fast-forward', 'timestamp': '2026-04-28T15:26:23', 'ticks_received': 4, 'running_trades': 0, 'subscribe_count': 0, 'actions': [], 'hit_trades': []}
+[KITE TICK STREAM] modes=fast-forward subscribed_total=7 spot_subscribed=5 option_subscribed=2 spot_tokens=[NIFTY, BANKNIFTY, FINNIFTY, SENSEX, MIDCPNIFTY] option_tokens=[NIFTY26APR23950CE, NIFTY26APR24000PE] tick_batch=[MIDCPNIFTY(288009)=13992.95; NIFTY26APR23950CE(18498818)=43.10; NIFTY(256265)=23998.25]
+[BROKER TICK] {'mode': 'fast-forward', 'timestamp': '2026-04-28T15:26:24', 'ticks_received': 3, 'running_trades': 0, 'subscribe_count': 0, 'actions': [], 'hit_trades': []}
+[KITE TICK STREAM] modes=fast-forward subscribed_total=7 spot_subscribed=5 option_subscribed=2 spot_tokens=[NIFTY, BANKNIFTY, FINNIFTY, SENSEX, MIDCPNIFTY] option_tokens=[NIFTY26APR23950CE, NIFTY26APR24000PE] tick_batch=[BANKNIFTY(260105)=55387.70; NIFTY(256265)=23998.15; SENSEX(265)=76898.64; FINNIFTY(257801)=25917.20; NIFTY26APR24000PE(18499586)=7.05]
+2026-04-28 15:26:24  INFO      features.spot_atm_utils              [kite_instruments] loaded 56562 option instruments for 2026-04-28
+[BROKER TICK] {'mode': 'fast-forward', 'timestamp': '2026-04-28T15:26:24', 'ticks_received': 5, 'running_trades': 0, 'subscribe_count': 0, 'actions': [], 'hit_trades': []}
+
+
+[DELTA CHAIN LOG] leg=ttx2772l entry_kind=EntryType.EntryByDeltaRange underlying=NIFTY expiry=2026-04-28 type=PE spot=23997.5 T_years=7e-06 total_strikes=153

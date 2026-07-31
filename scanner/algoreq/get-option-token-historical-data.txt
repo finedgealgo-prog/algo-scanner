@@ -1,0 +1,17 @@
+curl 'https://prices.algotest.in/historical?tokens=NSE_54810%2CNSE_54811&start_dt=2026-04-08T09%3A15&end_dt=2026-04-24T15%3A30' \
+  -H 'accept: application/json, text/plain, */*' \
+  -H 'accept-language: en-US,en;q=0.9,ta;q=0.8' \
+  -H 'cache-control: no-cache' \
+  -b '_fbp=fb.1.1742824225846.441183240522633121; _fbc=fb.1.1747493444754.IwZXh0bgNhZW0BMABhZGlkAasi5Bo0GcABHt7UgDn1wt6MRuk5GZH1yWcsiZchP7S153stlnT-Z7f4dQbTNiEcyx5Bx5FA_aem_6XpfZrC5ysFUwrhTQd0L-A; ajs_anonymous_id=645368f2-9539-4963-a84b-8524ab1b484f; ajs_user_id=638b83f9d7f7b877201ddced; ph_phc_H24CptSR6nBSVJ8nYCloSyDfhCk8DP22HBgC9qSwHPr_posthog=%7B%22distinct_id%22%3A%22638b83f9d7f7b877201ddced%22%2C%22%24sesid%22%3A%5Bnull%2Cnull%2Cnull%5D%2C%22%24epp%22%3Atrue%2C%22%24initial_person_info%22%3A%7B%22r%22%3A%22https%3A%2F%2Falgotest.in%2F%22%2C%22u%22%3A%22https%3A%2F%2Falgotest.in%2Flogin%22%7D%7D; _gcl_au=1.1.267873170.1773909017; _ga_N11XQ3TYSG=GS2.1.s1776732707$o57$g1$t1776732708$j59$l0$h0; _ga_MS6Z4BR=GS2.1.s1777081657$o90$g0$t1777081657$j60$l0$h0; _gid=GA1.2.1341777879.1777081658; _gat_UA-217422508-1=1; _uetsid=bd2121f0404811f190de9fd8152cd47a; _ga=GA1.1.154747863.1742805321; _clck=1j7h7td%5E2%5Eg5i%5E0%5E1909; access_token_cookie=eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc3NzA4MTY2MCwianRpIjoiM2JjMmIxZmMtNmE5YS00Nzk1LTkyOWItNjdiOTZkMjVlYzIxIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjYzOGI4M2Y5ZDdmN2I4NzcyMDFkZGNlZCIsIm5iZiI6MTc3NzA4MTY2MCwiY3NyZiI6Ijc0NDE3MDRiLWQ3NjctNDhlMy04YjM5LTc4ZmFlYWNiYzk3OSIsImV4cCI6MTc3NzM0MDg2MH0.GJb53ood8F12ynatIqRSerQKeG9XBrbPEJzf8JywcZYh8ZXw1PT2Brt6SjBURosYK_WrazLu9jG6Q9aJ93NwfmdCFhV8YOPwmFCqBK54wTg0ylqPAv_2Ku6pi7_a7Ed3VS9Kza-v1RKvz-rdRRlvYTGSglXnx079V_vCVWI3aH52RY2bylMnRHZanR5JJpKQkpoC52YBs3UndAf1hrBkRViIhAqj0wcmAL0KN63CKbZLFfiTbMv1yki-q5Wdrsp7M8bnD28rKZ3_7oVmrC7HPbB5a7p1l8TU6gOHDZz3y0a9XKt1g5F806nGyfN7PWoudsIf0rAT7dKXd_nSYUTqZ6unyt1Gn6Cot3lxU6M2S34P5xW-6ADpZmqD3g1HCyX8H4fBbJFwi0QgA-c44yPyk2R8VpwJgtEpLSj17EPllGJSOyTd6Rjsz7UXWM0PYqp_EaE8IOCuFBx8Yi2sYIdurphM4k3fPQEThy313eElKtTQoo91328QaU-jIuVzTDLW; csrf_access_token=7441704b-d767-48e3-8b39-78faeacbc979; mp_f7c3d9535820295f2d256c66e7c13599_mixpanel=%7B%22distinct_id%22%3A%22638b83f9d7f7b877201ddced%22%2C%22%24device_id%22%3A%2219745a5b1e27b7-06423c7e45c77d-16462c6e-1fa400-19745a5b1e27b7%22%2C%22%24initial_referrer%22%3A%22https%3A%2F%2Falgotest.in%2Fbacktest%22%2C%22%24initial_referring_domain%22%3A%22algotest.in%22%2C%22__mps%22%3A%7B%7D%2C%22__mpso%22%3A%7B%7D%2C%22__mpus%22%3A%7B%7D%2C%22__mpa%22%3A%7B%7D%2C%22__mpu%22%3A%7B%7D%2C%22__mpr%22%3A%5B%5D%2C%22__mpap%22%3A%5B%5D%2C%22%24user_id%22%3A%22638b83f9d7f7b877201ddced%22%2C%22%24search_engine%22%3A%22google%22%2C%22utm_source%22%3A%22documentation%22%2C%22utm_medium%22%3A%22internal%22%2C%22utm_campaign%22%3A%22seo%22%2C%22utm_content%22%3A%22feature%22%2C%22utm_term%22%3A%22heatmap%22%7D; _clsk=1pp6t8o%5E1777081668176%5E3%5E1%5Ek.clarity.ms%2Fcollect; _ga_Y0EK98JRBT=GS2.1.s1777081658$o751$g1$t1777081685$j33$l0$h0' \
+  -H 'origin: https://algotest.in' \
+  -H 'pragma: no-cache' \
+  -H 'priority: u=1, i' \
+  -H 'referer: https://algotest.in/' \
+  -H 'sec-ch-ua: "Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "Linux"' \
+  -H 'sec-fetch-dest: empty' \
+  -H 'sec-fetch-mode: cors' \
+  -H 'sec-fetch-site: same-site' \
+  -H 'user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36' \
+  -H 'x-csrf-token-access: fb0c9e78-4816-455c-93c2-02943e70b986'

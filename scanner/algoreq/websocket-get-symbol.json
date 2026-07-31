@@ -1,0 +1,73 @@
+{
+    "candle": "2026-04-08T11:10:21+05:30",
+    "symbols": [
+        {
+            "id": "BSE_1",
+            "underlying": "SENSEX",
+            "option_type": "CASH",
+            "expiry": null,
+            "strike": null,
+            "timestamp": "2026-04-08T11:10:00",
+            "close": 77531.19,
+            "open_interest": 0,
+            "implied_volatility": null,
+            "implied_fut": null,
+            "delta": null,
+            "gamma": null,
+            "theta": null,
+            "vega": null,
+            "rho": null
+        },
+        {
+            "id": "NSE_54815",
+            "underlying": "NIFTY",
+            "option_type": "PE",
+            "expiry": "2026-04-13",
+            "strike": 24000,
+            "timestamp": "2026-04-08T11:10:00",
+            "close": 215.4,
+            "open_interest": 4946760,
+            "implied_volatility": 0.18777620792388916,
+            "implied_fut": 23997.55078125,
+            "delta": -0.4973582327365875,
+            "gamma": 0.0007431069388985634,
+            "theta": -20.670141220092773,
+            "vega": 11.405364990234375,
+            "rho": -1.724597454071045
+        },
+        {
+            "id": "NSE_54812",
+            "underlying": "NIFTY",
+            "option_type": "CE",
+            "expiry": "2026-04-13",
+            "strike": 24000,
+            "timestamp": "2026-04-08T11:10:00",
+            "close": 212.95,
+            "open_interest": 7201870,
+            "implied_volatility": 0.18777620792388916,
+            "implied_fut": 23997.55078125,
+            "delta": 0.5026417374610901,
+            "gamma": 0.0007431069388985634,
+            "theta": -20.670141220092773,
+            "vega": 11.405364990234375,
+            "rho": 1.6817952394485474
+        },
+        {
+            "id": "NSE_0",
+            "underlying": "NIFTY",
+            "option_type": "CASH",
+            "expiry": null,
+            "strike": null,
+            "timestamp": "2026-04-08T11:10:00",
+            "close": 23990.5,
+            "open_interest": 0,
+            "implied_volatility": null,
+            "implied_fut": null,
+            "delta": null,
+            "gamma": null,
+            "theta": null,
+            "vega": null,
+            "rho": null
+        }
+    ]
+}

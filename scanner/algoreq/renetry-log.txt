@@ -1,0 +1,49 @@
+[FEATURE CHECK] listen_time=2025-11-03T09:20:00 trade_id=exec_19d90b74dd349067008 leg_id=6ypnde62 strategy_name=NIFTY-0DTE-1-1-5 - 75032 option=CE position=PositionType.Sell entry_price=111.4 ltp=106.0 stored_sl=130.91 next_sl=130.91 tp=None sl_enabled=True tg_enabled=False tsl_enabled=True
+[OVERALL CHECK] {'mode': 'backtest', 'trade_id': 'exec_19d90b74dd349067008', 'strategy_name': 'NIFTY-0DTE-1-1-5 - 75032', 'timestamp': '2025-11-03T09:20:00', 'current_mtm': -760.5, 'overall_sl_type': 'MTM', 'overall_sl_base': 600.0, 'overall_sl_current': 600.0, 'overall_sl_reentry_type': 'Immediate', 'overall_sl_reentry_done': 0, 'overall_sl_reentry_count': 1, 'overall_tgt_type': 'None', 'overall_tgt_base': 0.0, 'overall_tgt_current': 0.0, 'overall_tgt_reentry_type': 'None', 'overall_tgt_reentry_done': 0, 'overall_tgt_reentry_count': 0, 'dynamic_sl_threshold': 600.0}
+[OVERALL SL DEBUG] {'mode': 'backtest', 'trade_id': 'exec_19d90b74dd349067008', 'strategy_name': 'NIFTY-0DTE-1-1-5 - 75032', 'timestamp': '2025-11-03T09:20:00', 'current_mtm': -760.5, 'base_overall_sl': 600.0, 'reentry_done': 0, 'cycle_number': 1, 'cycle_overall_sl': 600.0, 'dynamic_sl_threshold': 600.0, 'checked_stoploss': 600.0, 'would_hit_cycle_sl': True, 'would_hit_dynamic_sl': True, 'skip_same_tick_overall': False, 'last_overall_event_at': '', 'last_overall_event_reason': ''}
+close_leg_in_db error trade=exec_19d90b74dd349067008 leg=0: Cannot create field 'exit_reason' in element {0: "69df6a5c4a7a86e2d5d4f91a"}, full error: {'index': 0, 'code': 28, 'errmsg': 'Cannot create field \'exit_reason\' in element {0: "69df6a5c4a7a86e2d5d4f91a"}'}
+[POSITION EXIT] trade=exec_19d90b74dd349067008 leg=6ypnde62 exit=2025-11-03T09:20:00 price=106.0 reason=overall_sl
+[OVERALL REENTRY PREPARE] {'mode': 'backtest', 'trade_id': 'exec_19d90b74dd349067008', 'reason': 'overall_sl', 'timestamp': '2025-11-03T09:20:00', 'base_overall_sl': 600.0, 'updated_reentry_done': 1, 'updated_cycle_number': 2, 'updated_overall_sl': 1200.0, 'current_overall_sl_threshold': 1200.0, 'entry_check_time': '09:20', 'reentry_type': 'Immediate'}
+[BACKTEST ENTRY TRIGGER] trade_id=exec_19d90b74dd349067008 group_name= strategy_name=NIFTY-0DTE-1-1-5 - 75032 entry_time=09:16 listen_time=09:20 triggering_previous_entry_execution=true catch_up=true
+[STRIKE CALC] leg=6ypnde62-ore-20251103092000 type=CE spot_price=25687.85
+[STRIKE CALC] leg=6ypnde62-ore-20251103092000 type=CE expiry_resolved=2025-11-04
+[STRIKE CALC] leg=6ypnde62-ore-20251103092000 type=CE entry_kind=EntryType.EntryByStrikeType strike_parameter=StrikeType.ATM underlying=NIFTY snapshot=2025-11-03T09:20:00
+[STRIKE CALC] leg=6ypnde62-ore-20251103092000 type=CE method=ATM/Offset spot=25687.85 param=0.0 step=50 resolved_strike=25700
+[STRIKE CALC] leg=6ypnde62-ore-20251103092000 type=CE method=ATM/Offset resolved_strike=25700 close=106.0
+[POSITION ENTRY] trade=exec_19d90b74dd349067008 leg=6ypnde62-ore-20251103092000 entry=2025-11-03 09:20:00 history_id=69df6a674a7a86e2d5d4f92e
+[ENTRY FEATURE SEED] {'trade_id': 'exec_19d90b74dd349067008', 'leg_id': '6ypnde62-ore-20251103092000', 'history_leg_id': '69df6a674a7a86e2d5d4f92e', 'sl_enabled': True, 'target_enabled': True, 'trail_enabled': True, 'momentum_type': 'None'}
+[LAZY LEG ENTRY SYNC] trade=exec_19d90b74dd349067008 leg=6ypnde62-ore-20251103092000 history_id=69df6a674a7a86e2d5d4f92e
+[BACKTEST ENTRY] trade_id=exec_19d90b74dd349067008 strategy=NIFTY-0DTE-1-1-5 - 75032 entry_time=09:16 leg_id=6ypnde62-ore-20251103092000 entered=True reason=- listen_time=09:20
+[STRIKE CALC] leg=pzn3qwif-ore-20251103092000 type=PE spot_price=25687.85
+[STRIKE CALC] leg=pzn3qwif-ore-20251103092000 type=PE expiry_resolved=2025-11-04
+[STRIKE CALC] leg=pzn3qwif-ore-20251103092000 type=PE entry_kind=EntryType.EntryByStrikeType strike_parameter=StrikeType.ATM underlying=NIFTY snapshot=2025-11-03T09:20:00
+[STRIKE CALC] leg=pzn3qwif-ore-20251103092000 type=PE method=ATM/Offset spot=25687.85 param=0.0 step=50 resolved_strike=25700
+[STRIKE CALC] leg=pzn3qwif-ore-20251103092000 type=PE method=ATM/Offset resolved_strike=25700 close=85.25
+[POSITION ENTRY] trade=exec_19d90b74dd349067008 leg=pzn3qwif-ore-20251103092000 entry=2025-11-03 09:20:00 history_id=69df6a674a7a86e2d5d4f932
+[ENTRY FEATURE SEED] {'trade_id': 'exec_19d90b74dd349067008', 'leg_id': 'pzn3qwif-ore-20251103092000', 'history_leg_id': '69df6a674a7a86e2d5d4f932', 'sl_enabled': True, 'target_enabled': True, 'trail_enabled': True, 'momentum_type': 'None'}
+[LAZY LEG ENTRY SYNC] trade=exec_19d90b74dd349067008 leg=pzn3qwif-ore-20251103092000 history_id=69df6a674a7a86e2d5d4f932
+[BACKTEST ENTRY] trade_id=exec_19d90b74dd349067008 strategy=NIFTY-0DTE-1-1-5 - 75032 entry_time=09:16 leg_id=pzn3qwif-ore-20251103092000 entered=True reason=- listen_time=09:20
+[OVERALL REENTRY ENTRY CHECK] {'mode': 'backtest', 'trade_id': 'exec_19d90b74dd349067008', 'reason': 'overall_sl', 'timestamp': '2025-11-03T09:20:00', 'entry_check_time': '09:20', 'queued_leg_ids': ['6ypnde62-ore-20251103092000', 'pzn3qwif-ore-20251103092000'], 'immediate_entries': 2, 'entry_condition': 'same_tick_backtest_entry_time_match', 'updated_overall_sl': 1200.0, 'current_overall_sl_threshold': 1200.0, 'check_message': 'reentry uses updated overall SL before immediate entry attempt'}
+[OVERALL REENTRY QUEUED] {'mode': 'backtest', 'trade_id': 'exec_19d90b74dd349067008', 'reason': 'overall_sl', 'reentry_type': 'Immediate', 'reentry_done': 1, 'reentry_count': 1, 'next_cycle_number': 2, 'next_overall_sl_value': 1200.0, 'next_overall_tgt_value': 0.0, 'legs_queued': ['6ypnde62-ore-20251103092000', 'pzn3qwif-ore-20251103092000'], 'immediate_entries': 2}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  [BROKER GROUP]  broker=Broker.Backtest  |  mode=algo-backtest  |  user=69dcf52711877c164638d2a7
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[STRAT SL/TGT CHECK - 69dcf57211877c164638d2aa] {'timestamp': '2025-11-03T09:20:00', 'strat': '69df6a514a7a86e2d5d4f911', 'user_id': '69dcf52711877c164638d2a7', 'mode': 'algo-backtest', 'open_mtm': -760.5, 'closed_mtm': 0.0, 'strat_mtm': -760.5, 'strat_sl': 600.0, 'original_sl': None, 'sl_remaining': -160.5, 'sl_status': 'HIT', 'strat_target': None, 'tgt_remaining': None, 'tgt_status': 'active', 'open_trades': 1, 'total_trades': 1}
+[STRAT SL HIT - 69dcf57211877c164638d2aa] {'timestamp': '2025-11-03T09:20:00', 'executed_strategy_id': '69df6a514a7a86e2d5d4f911', 'user_id': '69dcf52711877c164638d2a7', 'broker': '69dcf57211877c164638d2aa', 'mode': 'algo-backtest', 'strat_mtm': -760.5, 'lock_floor': None, 'squaring_off_trades': ['exec_19d90b74dd349067008']}
+[SQUARE OFF TOKEN LTP] {'trade_id': 'exec_19d90b74dd349067008', 'leg_id': '69df6a674a7a86e2d5d4f92e', 'token': 'NSE_2025110402019', 'listen_timestamp': '2025-11-03T09:20:00', 'option_chain': {'timestamp': '2025-11-03T09:20:00', 'close': 106.0, 'ltp': 106.0, 'current_price': 106.0, 'price': 106.0, 'last_price': 106.0}}
+[POSITION EXIT] trade=exec_19d90b74dd349067008 leg=69df6a674a7a86e2d5d4f92e exit=2025-11-03T09:20:00 price=106.0 reason=squared_off
+[SQUARE OFF] closed leg trade=exec_19d90b74dd349067008 leg=69df6a674a7a86e2d5d4f92e price=106.0 ts=2025-11-03T09:20:00
+[SQUARE OFF TOKEN LTP] {'trade_id': 'exec_19d90b74dd349067008', 'leg_id': '69df6a674a7a86e2d5d4f932', 'token': 'NSE_2025110460049', 'listen_timestamp': '2025-11-03T09:20:00', 'option_chain': {'timestamp': '2025-11-03T09:20:00', 'close': 85.25, 'ltp': 85.25, 'current_price': 85.25, 'price': 85.25, 'last_price': 85.25}}
+[POSITION EXIT] trade=exec_19d90b74dd349067008 leg=69df6a674a7a86e2d5d4f932 exit=2025-11-03T09:20:00 price=85.25 reason=squared_off
+[SQUARE OFF] closed leg trade=exec_19d90b74dd349067008 leg=69df6a674a7a86e2d5d4f932 price=85.25 ts=2025-11-03T09:20:00
+[SQUARE OFF] trade=exec_19d90b74dd349067008 marked SquaredOff
+  [STRAT SL HIT - 69dcf57211877c164638d2aa] trade=exec_19d90b74dd3 legs closed
+  [STRAT SL HIT - 69dcf57211877c164638d2aa] group close matched=0 modified=0
+[SL/TGT HIT EMIT] sent 1 strategy(s) to execute-orders hit_ids=['exec_19d90b74dd349067008']
+  [LTP SNAPSHOT] trade=exec_19d90b74dd349067008 legs=[{'leg_id': '6ypnde62', 'ltp': 106.0, 'entry_price': 111.4, 'pnl': 351.0}]
+INFO:     127.0.0.1:44424 - "GET /algo/algo-backtest-simulator?listen_timestamp=2025-11-03T09%3A20%3A00&autoload=false HTTP/1.1" 200 OK
+[OPEN STRATEGY FLOW] stage=getting_open_strategy trade_date=2025-11-03 activation_mode=algo-backtest
+[RUNNING TRADE QUERY] trade_date=2025-11-03 activation_mode=algo-backtest query={"activation_mode": "algo-backtest", "active_on_server": true, "creation_ts": {"$regex": "^2025\\-11\\-03"}, "status": "StrategyStatus.Live_Running", "trade_status": 1}
+[OPEN STRATEGY FLOW] stage=open_strategy_taken trade_date=2025-11-03 activation_mode=algo-backtest count=0
+[RUNNING TRADE STATUS] trade_date=2025-11-03 activation_mode=algo-backtest count=0

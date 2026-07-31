@@ -1,0 +1,57 @@
+{
+    "type": "broker-settings",
+    "message": "Broker settings updated",
+    "server_time": "2026-04-28T00:57:41Z",
+    "data": {
+        "brokers": [
+            {
+                "broker_id": "69def2dc7a8825b0dd8fdde7",
+                "broker_label": "Broker.Backtest1",
+                "user_id": "69dcf52711877c164638d2a7",
+                "mode": "algo-backtest",
+                "settings_active": false,
+                "stop_loss": 400,
+                "target": 2000,
+                "lock_and_trail": {
+                    "instrument_move": 800,
+                    "stop_loss_move": 622
+                },
+                "trail_sl": {
+                    "instrument_move": 100,
+                    "stop_loss_move": 52
+                },
+                "state": {
+                    "lock_activated": false,
+                    "current_lock_floor": 0,
+                    "lock_peak_mtm": 0,
+                    "effective_sl": null,
+                    "sl_peak_mtm": 0
+                }
+            },
+            {
+                "broker_id": "69dcf57211877c164638d2aa",
+                "broker_label": "Broker.Backtest",
+                "user_id": "69dcf52711877c164638d2a7",
+                "mode": "algo-backtest",
+                "settings_active": true,
+                "stop_loss": 2500,
+                "target": 1000,
+                "lock_and_trail": {
+                    "instrument_move": 801,
+                    "stop_loss_move": 602
+                },
+                "trail_sl": {
+                    "instrument_move": 50,
+                    "stop_loss_move": 36
+                },
+                "state": {
+                    "lock_activated": false,
+                    "current_lock_floor": 0,
+                    "lock_peak_mtm": 0,
+                    "effective_sl": null,
+                    "sl_peak_mtm": 0
+                }
+            }
+        ]
+    }
+}

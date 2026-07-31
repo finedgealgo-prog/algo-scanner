@@ -1,0 +1,30 @@
+----------------------_process_backtest_trade_tick ---------------
+[MTM TOTAL] {'trade_id': 'exec_19de2aeba7564fbc463', 'timestamp': '2025-11-03T09:16:00', 'current_mtm': 0.0}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  [BROKER GROUP]  broker=Broker.Backtest  |  mode=algo-backtest  |  user=69dcf52711877c164638d2a7
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[BROKER SL/TGT CHECK - 69dcf57211877c164638d2aa] {'timestamp': '2025-11-03T09:16:00', 'user_id': '69dcf52711877c164638d2a7', 'broker': '69dcf57211877c164638d2aa', 'mode': 'algo-backtest', 'open_mtm': 0.0, 'closed_mtm': 0.0, 'broker_mtm': 0.0, 'broker_sl': 2710, 'original_sl': None, 'sl_remaining': 2710.0, 'sl_status': 'active', 'broker_target': 1100, 'tgt_remaining': 1100.0, 'tgt_status': 'active', 'open_trades': 1, 'total_trades': 1}
+[BROKER LOCK CHECK - 69dcf57211877c164638d2aa] {'timestamp': '2025-11-03T09:16:00', 'broker': '69dcf57211877c164638d2aa', 'mode': 'algo-backtest', 'broker_mtm': 0.0, 'lock_activated': False, 'activate_at': 801.0, 'lock_profit': 602.0, 'remaining_to_lock': 801.0, 'trail_enabled': True}
+[STRAT SL/TGT CHECK - 69dcf57211877c164638d2aa] {'timestamp': '2025-11-03T09:16:00', 'strat': '69f46613e6180a965efcb72b', 'user_id': '69dcf52711877c164638d2a7', 'mode': 'algo-backtest', 'open_mtm': 0.0, 'closed_mtm': 0.0, 'strat_mtm': 0.0, 'strat_sl': 2500.0, 'runtime_current_overall_sl_threshold': None, 'original_sl': None, 'sl_remaining': 2500.0, 'sl_status': 'active', 'strat_target': None, 'tgt_remaining': None, 'tgt_status': 'active', 'open_trades': 1, 'total_trades': 1}
+[LEG QUEUED] trade=exec_19de2aeba7564fbc463 leg_id=k49do8lv leg_type=leg_1 option=CE expiry_kind=ExpiryType.Weekly position=PositionType.Sell lot_config_value=1
+[LEG QUEUED] trade=exec_19de2aeba7564fbc463 leg_id=ttx2772l leg_type=leg_2 option=PE expiry_kind=ExpiryType.Weekly position=PositionType.Sell lot_config_value=1
+[STRIKE CALC] leg=k49do8lv type=CE spot_price=25710.8 mode=algo-backtest source=db
+[STRIKE CALC] leg=k49do8lv type=CE expiry_resolved=2025-11-04
+[STRIKE CALC] leg=k49do8lv type=CE entry_kind=EntryType.EntryByStrikeType strike_parameter=StrikeType.ATM underlying=NIFTY snapshot=2025-11-03T09:16:00
+[STRIKE CALC] leg=k49do8lv type=CE method=ATM/Offset spot=25710.8 param=0.0 step=50 resolved_strike=25700
+[STRIKE CALC] leg=k49do8lv type=CE method=ATM/Offset resolved_strike=25700 close=111.4
+[ENTRY PRICE SOURCE] trade_id=exec_19de2aeba7564fbc463 leg=k49do8lv mode=algo-backtest source=chain token=NSE_2025110402019 symbol=NSE_2025110402019 price=111.4
+[POSITION ENTRY] trade=exec_19de2aeba7564fbc463 leg=k49do8lv entry=2025-11-03 09:16:00 history_id=69f46625e6180a965efcb72c
+[ENTRY FEATURE SEED] {'trade_id': 'exec_19de2aeba7564fbc463', 'leg_id': 'k49do8lv', 'history_leg_id': '69f46625e6180a965efcb72c', 'sl_enabled': True, 'target_enabled': True, 'trail_enabled': True, 'momentum_type': 'None'}
+[LAZY LEG ENTRY SYNC] trade=exec_19de2aeba7564fbc463 leg=k49do8lv history_id=69f46625e6180a965efcb72c
+[STRIKE CALC] leg=ttx2772l type=PE spot_price=25710.8 mode=algo-backtest source=db
+[STRIKE CALC] leg=ttx2772l type=PE expiry_resolved=2025-11-04
+[STRIKE CALC] leg=ttx2772l type=PE entry_kind=EntryType.EntryByStrikeType strike_parameter=StrikeType.ATM underlying=NIFTY snapshot=2025-11-03T09:16:00
+[STRIKE CALC] leg=ttx2772l type=PE method=ATM/Offset spot=25710.8 param=0.0 step=50 resolved_strike=25700
+[STRIKE CALC] leg=ttx2772l type=PE method=ATM/Offset resolved_strike=25700 close=77.45
+[ENTRY PRICE SOURCE] trade_id=exec_19de2aeba7564fbc463 leg=ttx2772l mode=algo-backtest source=chain token=NSE_2025110460049 symbol=NSE_2025110460049 price=77.45
+[POSITION ENTRY] trade=exec_19de2aeba7564fbc463 leg=ttx2772l entry=2025-11-03 09:16:00 history_id=69f46625e6180a965efcb730
+[ENTRY FEATURE SEED] {'trade_id': 'exec_19de2aeba7564fbc463', 'leg_id': 'ttx2772l', 'history_leg_id': '69f46625e6180a965efcb730', 'sl_enabled': True, 'target_enabled': True, 'trail_enabled': True, 'momentum_type': 'None'}
+[LAZY LEG ENTRY SYNC] trade=exec_19de2aeba7564fbc463 leg=ttx2772l history_id=69f46625e6180a965efcb730
+

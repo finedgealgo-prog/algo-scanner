@@ -1,0 +1,16 @@
+curl 'http://localhost:8000/algo/portfolio/activate' \
+  -H 'Accept: */*' \
+  -H 'Accept-Language: en-US,en;q=0.9,ta;q=0.8' \
+  -H 'Cache-Control: no-cache' \
+  -H 'Connection: keep-alive' \
+  -H 'Content-Type: application/json' \
+  -H 'Origin: null' \
+  -H 'Pragma: no-cache' \
+  -H 'Sec-Fetch-Dest: empty' \
+  -H 'Sec-Fetch-Mode: cors' \
+  -H 'Sec-Fetch-Site: cross-site' \
+  -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36' \
+  -H 'sec-ch-ua: "Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "Linux"' \
+  --data-raw '{"portfolio_id":"69e48debd1819d5dc989f9fd","activation_mode":"fast-forward","trades":[{"_id":"exec_19dcebc24f11bce24e1","active_on_server":true,"activation_mode":"fast-forward","broker":"69e48860208378407e72bf96","broker_type":"Broker.FlatTrade","check_after_ts":"2026-04-27 09:15:59","config":{"Ticker":"NIFTY"},"creation_ts":"2026-04-27 17:08:49.969000","entry_time":"2026-04-27 09:15:59","exit_time":"2026-04-27 15:24:59","external_start":null,"free_execution":false,"is_ra_algo":false,"is_shared":false,"last_activation_ts":"2026-04-27 17:08:49.969000","legs":[],"name":"NIFTY-0DTE-1-1-5 - 31342","portfolio":{"group_id":"exec_19dcebc24f1group","group_name":"new 0 dte test-fast-forward","portfolio":"69e48debd1819d5dc989f9fd"},"reentry_time_restriction":null,"skip_initial_candles":0,"status":"StrategyStatus.Live_Running","trade_status":1,"strategy_id":"69ef4ac9b5ff6cfcbba06dad","ticker":"NIFTY","source_strategy_id":"69e6f0edcd5c68431bce24e1","executed_strategy_id":"69ef4ac9b5ff6cfcbba06dad","number_of_executions":53}]}'

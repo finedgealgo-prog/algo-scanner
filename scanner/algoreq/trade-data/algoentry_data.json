@@ -1,0 +1,532 @@
+{
+    "_id": "6a0bd199cc63088c99577689",
+    "active_on_server": false,
+    "broker": "69cc8d70340c73617178943d",
+    "broker_type": "Broker.FlatTrade",
+    "check_after_ts": "2026-05-19 09:15:05",
+    "config": {
+        "ExecutionConfig": {
+            "LegsConfig": {
+                "og_leg_1": {
+                    "EntryOrder": {
+                        "Config": {
+                            "Buffer": {
+                                "LimitBuffer": 3,
+                                "TriggerBuffer": 0,
+                                "Type": "BufferType.Points"
+                            },
+                            "MarketOrderAfter": 50,
+                            "Type": "OrderType.Limit"
+                        },
+                        "Delay": 0
+                    },
+                    "ExitOrder": {
+                        "Config": {
+                            "Buffer": {
+                                "LimitBuffer": 3,
+                                "TriggerBuffer": 0,
+                                "Type": "BufferType.Points"
+                            },
+                            "MarketOrderAfter": 50,
+                            "Type": "OrderType.Limit"
+                        },
+                        "Delay": 0
+                    },
+                    "Product": "ProductType.NRML",
+                    "Reference": "PriceReferenceType.Trade"
+                },
+                "og_leg_2": {
+                    "EntryOrder": {
+                        "Config": {
+                            "Buffer": {
+                                "LimitBuffer": 3,
+                                "TriggerBuffer": 0,
+                                "Type": "BufferType.Points"
+                            },
+                            "MarketOrderAfter": 50,
+                            "Type": "OrderType.Limit"
+                        },
+                        "Delay": 0
+                    },
+                    "ExitOrder": {
+                        "Config": {
+                            "Buffer": {
+                                "LimitBuffer": 3,
+                                "TriggerBuffer": 0,
+                                "Type": "BufferType.Points"
+                            },
+                            "MarketOrderAfter": 50,
+                            "Type": "OrderType.Limit"
+                        },
+                        "Delay": 0
+                    },
+                    "Product": "ProductType.NRML",
+                    "Reference": "PriceReferenceType.Trade"
+                }
+            },
+            "LikeBacktester": false,
+            "LotMultiplier": 1,
+            "MarginAutoSquareOff": true
+        },
+        "Ticker": "NIFTY"
+    },
+    "creation_ts": "2026-05-19 08:27:29.823000",
+    "entry_time": "2026-05-19 09:15:59",
+    "exit_time": "2026-05-19 15:24:59",
+    "external_start": null,
+    "free_execution": false,
+    "is_ra_algo": false,
+    "is_shared": false,
+    "last_activation_ts": "2026-05-19 08:27:29.823000",
+    "legs": [
+        {
+            "current_transaction_id": null,
+            "display_sl_value": 95.77,
+            "display_target_value": null,
+            "entry_trade": {
+                "exchange_timestamp": "2026-05-19 09:16:00",
+                "price": 78.5,
+                "quantity": 65,
+                "traded_timestamp": "2026-05-19 09:16:00.211000",
+                "trigger_price": 80.5,
+                "trigger_timestamp": "2026-05-19 09:15:59.103000",
+                "underlying_at_trade": 23715.65,
+                "underlying_trigger_price": 23717.35
+            },
+            "exit_trade": {
+                "exchange_timestamp": "2026-05-19 09:18:51",
+                "price": 95.85,
+                "quantity": 65,
+                "traded_timestamp": "2026-05-19 09:18:56.609000",
+                "trigger_price": 95.85,
+                "trigger_timestamp": "2026-05-19 09:18:56.609000",
+                "underlying_at_trade": 23738.45,
+                "underlying_trigger_price": 23738.45
+            },
+            "expiry_date": "2026-05-19 15:30:00",
+            "id": "6a0bd199cc63088c99577689_leg_1",
+            "initial_sl_value": 95.77,
+            "is_reentered_leg": false,
+            "last_saw_price": 94.85,
+            "lot_size": 65,
+            "option": "CE",
+            "position": "PositionType.Sell",
+            "quantity": 65,
+            "status": 2,
+            "strike": 23700,
+            "symbol": "NIFTY2651923700CE",
+            "token": "NSE_51366",
+            "transactions": {
+                "6a0bd199cc63088c99577689_leg_1_txn_1": {
+                    "active": false,
+                    "broker_order_id": "26051900006264",
+                    "exit_order_type": null,
+                    "internal_order_id": 26051901600000100,
+                    "order_for": 1,
+                    "order_type": "OrderType.Limit"
+                },
+                "6a0bd199cc63088c99577689_leg_1_txn_2": {
+                    "active": false,
+                    "broker_order_id": "26051900006575",
+                    "exit_order_type": -1,
+                    "internal_order_id": 26051901600000144,
+                    "order_for": 2,
+                    "order_type": "OrderType.Limit"
+                }
+            }
+        },
+        {
+            "current_transaction_id": null,
+            "display_sl_value": 70.461,
+            "display_target_value": null,
+            "entry_trade": {
+                "exchange_timestamp": "2026-05-19 09:16:00",
+                "price": 70.05,
+                "quantity": 65,
+                "traded_timestamp": "2026-05-19 09:16:00.176000",
+                "trigger_price": 69.55,
+                "trigger_timestamp": "2026-05-19 09:15:59.103000",
+                "underlying_at_trade": 23715.65,
+                "underlying_trigger_price": 23717.35
+            },
+            "exit_trade": {
+                "exchange_timestamp": "2026-05-19 09:33:55",
+                "price": 70.55,
+                "quantity": 65,
+                "traded_timestamp": "2026-05-19 09:33:57.633000",
+                "trigger_price": 70.5,
+                "trigger_timestamp": "2026-05-19 09:33:57.306000",
+                "underlying_at_trade": 23705.7,
+                "underlying_trigger_price": 23706.95
+            },
+            "expiry_date": "2026-05-19 15:30:00",
+            "id": "6a0bd199cc63088c99577689_leg_2",
+            "initial_sl_value": 85.461,
+            "is_reentered_leg": false,
+            "last_saw_price": 70.5,
+            "lot_size": 65,
+            "option": "PE",
+            "position": "PositionType.Sell",
+            "quantity": 65,
+            "status": 2,
+            "strike": 23700,
+            "symbol": "NIFTY2651923700PE",
+            "token": "NSE_51367",
+            "transactions": {
+                "6a0bd199cc63088c99577689_leg_2_txn_1": {
+                    "active": false,
+                    "broker_order_id": "26051900006265",
+                    "exit_order_type": null,
+                    "internal_order_id": 26051901600000104,
+                    "order_for": 1,
+                    "order_type": "OrderType.Limit"
+                },
+                "6a0bd199cc63088c99577689_leg_2_txn_2": {
+                    "active": false,
+                    "broker_order_id": "26051900006582",
+                    "exit_order_type": -1,
+                    "internal_order_id": 26051901600000144,
+                    "order_for": 2,
+                    "order_type": "OrderType.Limit"
+                }
+            }
+        },
+        {
+            "current_transaction_id": null,
+            "display_sl_value": 62.3125,
+            "display_target_value": null,
+            "entry_trade": {
+                "exchange_timestamp": "2026-05-19 09:21:02",
+                "price": 57.85,
+                "quantity": 65,
+                "traded_timestamp": "2026-05-19 09:21:03.480000",
+                "trigger_price": 57.85,
+                "trigger_timestamp": "2026-05-19 09:21:03.480000",
+                "underlying_at_trade": 23731.9,
+                "underlying_trigger_price": 23731.9
+            },
+            "exit_trade": {
+                "exchange_timestamp": "2026-05-19 09:43:24",
+                "price": 62.45,
+                "quantity": 65,
+                "traded_timestamp": "2026-05-19 09:43:24.817000",
+                "trigger_price": 62.45,
+                "trigger_timestamp": "2026-05-19 09:43:24.817000",
+                "underlying_at_trade": 23745.4,
+                "underlying_trigger_price": 23745.4
+            },
+            "expiry_date": "2026-05-19 15:30:00",
+            "id": "6a0bd199cc63088c99577689_leg_3",
+            "initial_sl_value": 72.3125,
+            "is_reentered_leg": true,
+            "last_saw_price": 61.3,
+            "lot_size": 65,
+            "option": "CE",
+            "position": "PositionType.Sell",
+            "quantity": 65,
+            "status": 2,
+            "strike": 23750,
+            "symbol": "NIFTY2651923750CE",
+            "token": "NSE_51370",
+            "transactions": {
+                "6a0bd199cc63088c99577689_leg_3_txn_1": {
+                    "active": false,
+                    "broker_order_id": "26051900016532",
+                    "exit_order_type": null,
+                    "internal_order_id": 26051901600000240,
+                    "order_for": 1,
+                    "order_type": "OrderType.Limit"
+                },
+                "6a0bd199cc63088c99577689_leg_3_txn_2": {
+                    "active": false,
+                    "broker_order_id": "26051900022117",
+                    "exit_order_type": -1,
+                    "internal_order_id": 26051901600000284,
+                    "order_for": 2,
+                    "order_type": "OrderType.Limit"
+                }
+            }
+        },
+        {
+            "current_transaction_id": null,
+            "display_sl_value": 68.3125,
+            "display_target_value": null,
+            "entry_trade": {
+                "exchange_timestamp": "2026-05-19 09:40:20",
+                "price": 62.65,
+                "quantity": 65,
+                "traded_timestamp": "2026-05-19 09:40:22.491000",
+                "trigger_price": 62.745,
+                "trigger_timestamp": "2026-05-19 09:40:22.491000",
+                "underlying_at_trade": 23714.6,
+                "underlying_trigger_price": 23714.6
+            },
+            "exit_trade": {
+                "exchange_timestamp": "2026-05-19 09:49:22",
+                "price": 68.35,
+                "quantity": 65,
+                "traded_timestamp": "2026-05-19 09:49:24.902000",
+                "trigger_price": 68.35,
+                "trigger_timestamp": "2026-05-19 09:49:24.902000",
+                "underlying_at_trade": 23707.2,
+                "underlying_trigger_price": 23707.2
+            },
+            "expiry_date": "2026-05-19 15:30:00",
+            "id": "6a0bd199cc63088c99577689_leg_4",
+            "initial_sl_value": 78.3125,
+            "is_reentered_leg": true,
+            "last_saw_price": 66.8,
+            "lot_size": 65,
+            "option": "PE",
+            "position": "PositionType.Sell",
+            "quantity": 65,
+            "status": 2,
+            "strike": 23700,
+            "symbol": "NIFTY2651923700PE",
+            "token": "NSE_51367",
+            "transactions": {
+                "6a0bd199cc63088c99577689_leg_4_txn_1": {
+                    "active": false,
+                    "broker_order_id": "26051900051136",
+                    "exit_order_type": null,
+                    "internal_order_id": 26051901600000440,
+                    "order_for": 1,
+                    "order_type": "OrderType.Limit"
+                },
+                "6a0bd199cc63088c99577689_leg_4_txn_2": {
+                    "active": false,
+                    "broker_order_id": "26051900072853",
+                    "exit_order_type": -1,
+                    "internal_order_id": 26051901600000560,
+                    "order_for": 2,
+                    "order_type": "OrderType.Limit"
+                }
+            }
+        },
+        {
+            "current_transaction_id": null,
+            "display_sl_value": 67.22200000000001,
+            "display_target_value": null,
+            "entry_trade": {
+                "exchange_timestamp": "2026-05-19 09:45:46",
+                "price": 55.1,
+                "quantity": 65,
+                "traded_timestamp": "2026-05-19 09:45:47.918000",
+                "trigger_price": 55.169999999999995,
+                "trigger_timestamp": "2026-05-19 09:45:47.629000",
+                "underlying_at_trade": 23740.9,
+                "underlying_trigger_price": 23740.9
+            },
+            "exit_trade": {
+                "exchange_timestamp": "2026-05-19 09:54:53",
+                "price": 39.25,
+                "quantity": 65,
+                "traded_timestamp": "2026-05-19 09:54:53.420000",
+                "trigger_price": 39.45,
+                "trigger_timestamp": "2026-05-19 09:54:52.924000",
+                "underlying_at_trade": 23699.55,
+                "underlying_trigger_price": 23699.75
+            },
+            "expiry_date": "2026-05-19 15:30:00",
+            "id": "6a0bd199cc63088c99577689_leg_5",
+            "initial_sl_value": 67.22200000000001,
+            "is_reentered_leg": true,
+            "last_saw_price": 39.4,
+            "lot_size": 65,
+            "option": "CE",
+            "position": "PositionType.Sell",
+            "quantity": 65,
+            "status": 2,
+            "strike": 23750,
+            "symbol": "NIFTY2651923750CE",
+            "token": "NSE_51370",
+            "transactions": {
+                "6a0bd199cc63088c99577689_leg_5_txn_1": {
+                    "active": false,
+                    "broker_order_id": "26051900081081",
+                    "exit_order_type": null,
+                    "internal_order_id": 26051901600000600,
+                    "order_for": 1,
+                    "order_type": "OrderType.Limit"
+                },
+                "6a0bd199cc63088c99577689_leg_5_txn_2": {
+                    "active": false,
+                    "broker_order_id": "26051900086675",
+                    "exit_order_type": -1,
+                    "internal_order_id": 26051901600000624,
+                    "order_for": 2,
+                    "order_type": "OrderType.Limit"
+                }
+            }
+        },
+        {
+            "current_transaction_id": null,
+            "display_sl_value": 72.12,
+            "display_target_value": null,
+            "entry_trade": {
+                "exchange_timestamp": "2026-05-19 09:50:01",
+                "price": 60.1,
+                "quantity": 65,
+                "traded_timestamp": "2026-05-19 09:50:02.539000",
+                "trigger_price": 60.255,
+                "trigger_timestamp": "2026-05-19 09:50:02.323000",
+                "underlying_at_trade": 23716.8,
+                "underlying_trigger_price": 23716.8
+            },
+            "exit_trade": {
+                "exchange_timestamp": "2026-05-19 09:52:25",
+                "price": 72.65,
+                "quantity": 65,
+                "traded_timestamp": "2026-05-19 09:52:27.632000",
+                "trigger_price": 72.35,
+                "trigger_timestamp": "2026-05-19 09:52:27.342000",
+                "underlying_at_trade": 23696.05,
+                "underlying_trigger_price": 23695.9
+            },
+            "expiry_date": "2026-05-19 15:30:00",
+            "id": "6a0bd199cc63088c99577689_leg_6",
+            "initial_sl_value": 72.12,
+            "is_reentered_leg": true,
+            "last_saw_price": 72.35,
+            "lot_size": 65,
+            "option": "PE",
+            "position": "PositionType.Sell",
+            "quantity": 65,
+            "status": 2,
+            "strike": 23700,
+            "symbol": "NIFTY2651923700PE",
+            "token": "NSE_51367",
+            "transactions": {
+                "6a0bd199cc63088c99577689_leg_6_txn_1": {
+                    "active": false,
+                    "broker_order_id": "26051900094692",
+                    "exit_order_type": null,
+                    "internal_order_id": 26051901600000640,
+                    "order_for": 1,
+                    "order_type": "OrderType.Limit"
+                },
+                "6a0bd199cc63088c99577689_leg_6_txn_2": {
+                    "active": false,
+                    "broker_order_id": "26051900096170",
+                    "exit_order_type": -1,
+                    "internal_order_id": 26051901600000656,
+                    "order_for": 2,
+                    "order_type": "OrderType.Limit"
+                }
+            }
+        },
+        {
+            "current_transaction_id": null,
+            "display_sl_value": 78.18,
+            "display_target_value": null,
+            "entry_trade": {
+                "exchange_timestamp": "2026-05-19 09:54:34",
+                "price": 65.15,
+                "quantity": 65,
+                "traded_timestamp": "2026-05-19 09:54:35.726000",
+                "trigger_price": 65.115,
+                "trigger_timestamp": "2026-05-19 09:54:35.726000",
+                "underlying_at_trade": 23698.3,
+                "underlying_trigger_price": 23698.3
+            },
+            "exit_trade": {
+                "exchange_timestamp": "2026-05-19 09:54:53",
+                "price": 67.1,
+                "quantity": 65,
+                "traded_timestamp": "2026-05-19 09:54:53.433000",
+                "trigger_price": 66,
+                "trigger_timestamp": "2026-05-19 09:54:52.924000",
+                "underlying_at_trade": 23699.55,
+                "underlying_trigger_price": 23699.75
+            },
+            "expiry_date": "2026-05-19 15:30:00",
+            "id": "6a0bd199cc63088c99577689_leg_7",
+            "initial_sl_value": 78.18,
+            "is_reentered_leg": true,
+            "last_saw_price": 66.05,
+            "lot_size": 65,
+            "option": "PE",
+            "position": "PositionType.Sell",
+            "quantity": 65,
+            "status": 2,
+            "strike": 23700,
+            "symbol": "NIFTY2651923700PE",
+            "token": "NSE_51367",
+            "transactions": {
+                "6a0bd199cc63088c99577689_leg_7_txn_1": {
+                    "active": false,
+                    "broker_order_id": "26051900100533",
+                    "exit_order_type": null,
+                    "internal_order_id": 26051901600000668,
+                    "order_for": 1,
+                    "order_type": "OrderType.Limit"
+                },
+                "6a0bd199cc63088c99577689_leg_7_txn_2": {
+                    "active": false,
+                    "broker_order_id": "26051900104381",
+                    "exit_order_type": -1,
+                    "internal_order_id": 26051901600000676,
+                    "order_for": 2,
+                    "order_type": "OrderType.Limit"
+                }
+            }
+        }
+    ],
+    "name": "NIFTY-0DTE-1-1-5",
+    "notifications": [
+        {
+            "level": 10,
+            "message": "NIFTY2651923750CE(Qty: 65) will enter when Price Crosses below 57.85.",
+            "timestamp": "2026-05-19 09:18:57.041000"
+        },
+        {
+            "level": 10,
+            "message": "NIFTY2651923700PE(Qty: 65) will enter when Price Crosses below 62.74.",
+            "timestamp": "2026-05-19 09:33:57.819000"
+        },
+        {
+            "level": 10,
+            "message": "NIFTY2651923750CE(Qty: 65) will enter when Price Crosses below 55.17.",
+            "timestamp": "2026-05-19 09:43:25.440000"
+        },
+        {
+            "level": 10,
+            "message": "NIFTY2651923750CE(Qty: 65) will enter now as Price Crossed below 55.17. Current Price is 54.3.",
+            "timestamp": "2026-05-19 09:45:47.644000"
+        },
+        {
+            "level": 10,
+            "message": "NIFTY2651923700PE(Qty: 65) will enter when Price Crosses below 60.26.",
+            "timestamp": "2026-05-19 09:49:25.194000"
+        },
+        {
+            "level": 10,
+            "message": "NIFTY2651923700PE(Qty: 65) will enter now as Price Crossed below 60.26. Current Price is 60.0.",
+            "timestamp": "2026-05-19 09:50:02.324000"
+        },
+        {
+            "level": 10,
+            "message": "NIFTY2651923700PE(Qty: 65) will enter when Price Crosses below 65.11.",
+            "timestamp": "2026-05-19 09:52:27.860000"
+        }
+    ],
+    "ongoing_trade": null,
+    "portfolio": {
+        "group_id": "6a0bd199cc63088c99577688",
+        "group_name": "SENSEX-1-0-DTE-DEC (1)",
+        "portfolio": "6954677667e00f1a737ab9c0"
+    },
+    "reentry_time_restriction": null,
+    "skip_initial_candles": 0,
+    "status": "StrategyStatus.SquaredOff",
+    "strategy_id": "689758e7f54b473a8d8da7f2",
+    "ticker": "NIFTY",
+    "trades": [
+        {
+            "display_sl_value": -2500,
+            "display_target_value": null,
+            "id": "6a0bd199cc63088c99577689_trade_1",
+            "lock_activated": false
+        }
+    ]
+}

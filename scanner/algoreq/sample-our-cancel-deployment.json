@@ -1,0 +1,35 @@
+{
+    "type": "execute_order",
+    "message": "Deployment cancelled",
+    "server_time": "2026-04-10T10:48:13Z",
+    "data": {
+        "group_id": "exec_19d77017ea0group",
+        "records": [
+            {
+                "_id": "exec_19d77017ea085d0d62f",
+                "strategy_id": "69d8d55fcbcd8d2af7d87eee",
+                "name": "NIFTY-0DTE-10-45-1-NO-DELTA-2 - 31718",
+                "status": "StrategyStatus.SquaredOff",
+                "trade_status": 1,
+                "active_on_server": false,
+                "activation_mode": "algo-backtest",
+                "broker_type": "Broker.Backtest",
+                "ticker": "NIFTY",
+                "legs": [],
+                "creation_ts": "2025-11-03 09:11:00.000000",
+                "entry_time": "2025-11-03 10:46:59",
+                "exit_time": "2025-11-03 15:25:59",
+                "config": {},
+                "portfolio": {
+                    "group_id": "exec_19d77017ea0group",
+                    "group_name": "new 0 dte test",
+                    "portfolio": "69d353a01ffebfe0b7a0f2cb"
+                },
+                "open_legs_count": 0,
+                "closed_legs_count": 0,
+                "pending_legs_count": 0,
+                "position_refresh_trigger": "cancel-deployment"
+            }
+        ]
+    }
+}

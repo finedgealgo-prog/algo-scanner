@@ -1,0 +1,17 @@
+curl 'http://localhost:8000/algo/margin/calculate' \
+  -H 'Accept: */*' \
+  -H 'Accept-Language: en-US,en;q=0.9,ta;q=0.8' \
+  -H 'Cache-Control: no-cache' \
+  -H 'Connection: keep-alive' \
+  -H 'Content-Type: application/json' \
+  -H 'Origin: http://localhost:5173' \
+  -H 'Pragma: no-cache' \
+  -H 'Referer: http://localhost:5173/' \
+  -H 'Sec-Fetch-Dest: empty' \
+  -H 'Sec-Fetch-Mode: cors' \
+  -H 'Sec-Fetch-Site: same-site' \
+  -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36' \
+  -H 'sec-ch-ua: "Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "Linux"' \
+  --data-raw '{"legs":[{"underlying":"NIFTY","instrument_type":"CE","expiry":"2025-11-04 15:30:00","strike":25700,"transaction_type":"SELL","quantity":1,"lot_size":65,"ltp":111.4,"spot":0},{"underlying":"NIFTY","instrument_type":"PE","expiry":"2025-11-04 15:30:00","strike":25650,"transaction_type":"SELL","quantity":1,"lot_size":65,"ltp":59.25,"spot":0},{"underlying":"NIFTY","instrument_type":"CE","expiry":"2025-11-04 15:30:00","strike":25650,"transaction_type":"SELL","quantity":1,"lot_size":65,"ltp":119.15,"spot":0},{"underlying":"NIFTY","instrument_type":"PE","expiry":"2025-11-04 15:30:00","strike":25650,"transaction_type":"SELL","quantity":1,"lot_size":65,"ltp":65.8,"spot":0},{"underlying":"NIFTY","instrument_type":"CE","expiry":"2025-11-04 15:30:00","strike":25650,"transaction_type":"SELL","quantity":1,"lot_size":65,"ltp":119.15,"spot":0},{"underlying":"NIFTY","instrument_type":"PE","expiry":"2025-11-04 15:30:00","strike":25750,"transaction_type":"SELL","quantity":1,"lot_size":65,"ltp":116.35,"spot":0}]}'

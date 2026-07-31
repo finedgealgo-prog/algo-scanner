@@ -1,0 +1,17 @@
+curl 'https://prices.algotest.in/historical?tokens=NSE_72261%2CNSE_72268%2CNSE_72263%2CNSE_72264%2CNSE_72265&start_dt=2026-04-27T09%3A15&end_dt=2026-04-27T15%3A30' \
+  -H 'accept: application/json, text/plain, */*' \
+  -H 'accept-language: en-US,en;q=0.9,ta;q=0.8' \
+  -H 'cache-control: no-cache' \
+  -b '_fbp=fb.1.1742824225846.441183240522633121; _fbc=fb.1.1747493444754.IwZXh0bgNhZW0BMABhZGlkAasi5Bo0GcABHt7UgDn1wt6MRuk5GZH1yWcsiZchP7S153stlnT-Z7f4dQbTNiEcyx5Bx5FA_aem_6XpfZrC5ysFUwrhTQd0L-A; ajs_anonymous_id=645368f2-9539-4963-a84b-8524ab1b484f; ajs_user_id=638b83f9d7f7b877201ddced; ph_phc_H24CptSR6nBSVJ8nYCloSyDfhCk8DP22HBgC9qSwHPr_posthog=%7B%22distinct_id%22%3A%22638b83f9d7f7b877201ddced%22%2C%22%24sesid%22%3A%5Bnull%2Cnull%2Cnull%5D%2C%22%24epp%22%3Atrue%2C%22%24initial_person_info%22%3A%7B%22r%22%3A%22https%3A%2F%2Falgotest.in%2F%22%2C%22u%22%3A%22https%3A%2F%2Falgotest.in%2Flogin%22%7D%7D; _gcl_au=1.1.267873170.1773909017; _ga_N11XQ3TYSG=GS2.1.s1776732707$o57$g1$t1776732708$j59$l0$h0; _gid=GA1.2.514567509.1777183386; _clck=1j7h7td%5E2%5Eg5k%5E0%5E1909; access_token_cookie=eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc3NzI4ODQ5NiwianRpIjoiYjliN2NmMDQtNDQ2NC00OGFhLWFmYWUtOGZmNGU3NTcxM2FiIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjYzOGI4M2Y5ZDdmN2I4NzcyMDFkZGNlZCIsIm5iZiI6MTc3NzI4ODQ5NiwiY3NyZiI6ImJiMTIzYzdkLTA3ZTMtNDJjYS1hODk4LTk2ZmRlNjkxNjNmMyIsImV4cCI6MTc3NzU0NzY5Nn0.OhzAvsKi06nQHnxkdmFeNLTx3sTMo82O4Bqw5-R3ErYU7X0ndpkz0eBhusg12VWxQiAuz2H48HOCGCkpMnaJDJCiWmQ3e4dAMXJ8IlhgISyThJsV5nQhbW_OlF8xPUBst8Mfwg83hdAfivgujpDsPQyklQRbLLwMdJidjU6WeNQnIMGYjiNtB8FXoQqYkEUc_iBx0gbcRtI6D6uwWnVL7AtqSk5QuqS6bItxYD_vTFDT9WbVvieL9SlEM0XM_cGUzIPVgItE4sAYLxJ7a02ZE1NI9vTi1oqq3jziZcCivrVRevlA489f0AXtIX6kvqh4PlDQsmnewj1gH7c4BrRB9Vk5e9Cu5ZgPDZ5lczFeec_bl4ohq7tbQdVpeilOmuafOflKXUjHsn-QqASuQkwX0u0Fby6N1Aquk9j12Z0ScQRSD7EQP1Mc9pN-syO9WhPh0TNsnaIF2ByZQZaLOdwm2RIC31bClzDFSbcjv6q7USkKzGM8lAUFnwFBiiFH4hJu; csrf_access_token=bb123c7d-07e3-42ca-a898-96fde69163f3; mp_f7c3d9535820295f2d256c66e7c13599_mixpanel=%7B%22distinct_id%22%3A%22638b83f9d7f7b877201ddced%22%2C%22%24device_id%22%3A%2219745a5b1e27b7-06423c7e45c77d-16462c6e-1fa400-19745a5b1e27b7%22%2C%22%24initial_referrer%22%3A%22https%3A%2F%2Falgotest.in%2Fbacktest%22%2C%22%24initial_referring_domain%22%3A%22algotest.in%22%2C%22__mps%22%3A%7B%7D%2C%22__mpso%22%3A%7B%7D%2C%22__mpus%22%3A%7B%7D%2C%22__mpa%22%3A%7B%7D%2C%22__mpu%22%3A%7B%7D%2C%22__mpr%22%3A%5B%5D%2C%22__mpap%22%3A%5B%5D%2C%22%24user_id%22%3A%22638b83f9d7f7b877201ddced%22%2C%22%24search_engine%22%3A%22google%22%2C%22utm_source%22%3A%22documentation%22%2C%22utm_medium%22%3A%22internal%22%2C%22utm_campaign%22%3A%22seo%22%2C%22utm_content%22%3A%22feature%22%2C%22utm_term%22%3A%22heatmap%22%7D; _ga_MS6Z4BR=GS2.1.s1777306698$o99$g1$t1777306779$j52$l0$h0; _ga=GA1.2.154747863.1742805321; _uetsid=97ab8020413511f196b19dea10c95d74; _clsk=17d3adt%5E1777307217482%5E12%5E1%5Ej.clarity.ms%2Fcollect; _ga_Y0EK98JRBT=GS2.1.s1777306698$o764$g1$t1777307221$j60$l0$h0' \
+  -H 'origin: https://algotest.in' \
+  -H 'pragma: no-cache' \
+  -H 'priority: u=1, i' \
+  -H 'referer: https://algotest.in/' \
+  -H 'sec-ch-ua: "Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "Linux"' \
+  -H 'sec-fetch-dest: empty' \
+  -H 'sec-fetch-mode: cors' \
+  -H 'sec-fetch-site: same-site' \
+  -H 'user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36' \
+  -H 'x-csrf-token-access: bb123c7d-07e3-42ca-a898-96fde69163f3'

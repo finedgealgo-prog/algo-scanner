@@ -1,0 +1,37 @@
+{
+    "legs": [
+        {
+            "underlying": "NIFTY",
+            "instrument_type": "PE",
+            "expiry": "2026-05-05",
+            "strike": 24000,
+            "transaction_type": "SELL",
+            "quantity": 1,
+            "lot_size": 65,
+            "ltp": 0,
+            "spot": 0
+        },
+        {
+            "underlying": "NIFTY",
+            "instrument_type": "CE",
+            "expiry": "2026-05-05",
+            "strike": 24000,
+            "transaction_type": "SELL",
+            "quantity": 1,
+            "lot_size": 65,
+            "ltp": 0,
+            "spot": 0
+        },
+        {
+            "underlying": "NIFTY",
+            "instrument_type": "CE",
+            "expiry": "2026-05-05",
+            "strike": 24500,
+            "transaction_type": "BUY",
+            "quantity": 1,
+            "lot_size": 65,
+            "ltp": 0,
+            "spot": 0
+        }
+    ]
+}

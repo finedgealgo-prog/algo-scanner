@@ -1,0 +1,53 @@
+{
+    "trade_date": "2026-04-27",
+    "listen_time": "13:58:31",
+    "listen_timestamp": "2026-04-27T13:58:31.406",
+    "ltp": [
+        {
+            "token": "256265",
+            "ltp": 24112.55,
+            "underlying": "NIFTY",
+            "option_type": "SPOT",
+            "timestamp": "2026-04-27T13:58:31.406"
+        },
+        {
+            "token": "260105",
+            "ltp": 56339.9,
+            "underlying": "BANKNIFTY",
+            "option_type": "SPOT",
+            "timestamp": "2026-04-27T13:58:31.406"
+        },
+        {
+            "token": "257801",
+            "ltp": 26190.35,
+            "underlying": "FINNIFTY",
+            "option_type": "SPOT",
+            "timestamp": "2026-04-27T13:58:31.406"
+        },
+        {
+            "token": "265",
+            "ltp": 77373.63,
+            "underlying": "SENSEX",
+            "option_type": "SPOT",
+            "timestamp": "2026-04-27T13:58:31.406"
+        },
+        {
+            "token": "288009",
+            "ltp": 13945.25,
+            "underlying": "MIDCPNIFTY",
+            "option_type": "SPOT",
+            "timestamp": "2026-04-27T13:58:31.406"
+        }
+    ],
+    "spot_map": {
+        "FINNIFTY": 26190.35,
+        "BANKNIFTY": 56339.9,
+        "SENSEX": 77373.63,
+        "MIDCPNIFTY": 13945.25,
+        "NIFTY": 24112.55
+    },
+    "broker_status": "running",
+    "mode": "fast-forward",
+    "tick_count": 315,
+    "emit_source": "kite_tick_listener"
+}

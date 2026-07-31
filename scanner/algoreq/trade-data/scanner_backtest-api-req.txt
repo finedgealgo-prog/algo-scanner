@@ -1,0 +1,17 @@
+curl 'http://localhost:8000/scanner/run_backtest' \
+  -H 'Accept: */*' \
+  -H 'Accept-Language: en-US,en;q=0.9,ta;q=0.8' \
+  -H 'Cache-Control: no-cache' \
+  -H 'Connection: keep-alive' \
+  -H 'Content-Type: application/json' \
+  -H 'Origin: http://localhost:5173' \
+  -H 'Pragma: no-cache' \
+  -H 'Referer: http://localhost:5173/' \
+  -H 'Sec-Fetch-Dest: empty' \
+  -H 'Sec-Fetch-Mode: cors' \
+  -H 'Sec-Fetch-Site: same-site' \
+  -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36' \
+  -H 'sec-ch-ua: "Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "Linux"' \
+  --data-raw '{"stock_price_min":0,"stock_price_max":0,"sectors":[],"indexes":["nifty_50"],"formula":"((70% * 6 Month Volatility) + (20% * 3 Month Performance) + (10% * 1 Year Performance)) / 3 Month Volatility","starting_capital":300000,"entry_rank":12,"exit_rank":25,"rebalance_frequency":"monthly","rebalance_date":"10","alternative_rebalance_day":"next_day","position_sizing":"equal_weight","strategy_name":"test","start_date":"2019-01-01","end_date":"2026-05-23","regime_filter_status":true,"regime_filter":"supertrend_1_2_5","regime_filter_action":"go_cash","regime_filter_indexes":"nifty_500","uncorrelated_asset_status":true,"uncorrelated_asset_type":"gold_bees","uncorrelated_asset_allocation":100,"min_price":null,"max_price":null}'

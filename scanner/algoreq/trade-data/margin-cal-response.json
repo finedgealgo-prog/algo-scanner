@@ -1,0 +1,16 @@
+{
+    "last": {
+        "span": 115291.5,
+        "exposure": 31196.555,
+        "netoptionvalue": 2866.5,
+        "spread": 0,
+        "total": 146488.055
+    },
+    "total": {
+        "span": 262620.5,
+        "exposure": 93589.665,
+        "netoptionvalue": 26539.5,
+        "spread": 0,
+        "total": 356210.165
+    }
+}
