@@ -177,14 +177,8 @@ def seed_indicator_schemas() -> dict[str, Any]:
             "outputs": list(defn.outputs),
             "seeded_at": seeded_at,
         }
-        # Keyed on label, not schema_key — several distinct labels (e.g. "SMA
-        # (Simple Moving Average)" and "HMA (Hull Moving Average)") share one
-        # schema_key because they reuse the same pipesSchema entry. Upserting
-        # on schema_key alone made every later label in _ALL_INDICATOR_LABELS
-        # silently clobber the earlier one's doc, dropping it from the catalog
-        # the API serves entirely.
         col.update_one(
-            {"label": defn.label},
+            {"schema_key": defn.schema_key},
             {"$set": doc},
             upsert=True,
         )

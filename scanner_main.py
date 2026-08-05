@@ -23,42 +23,14 @@ Run (from /media/ashok-innoppl/7CD60970D6092C48/algo-backend/algo.scanner):
     uvicorn scanner_main:app --reload --port 8002
 """
 
-import asyncio  # noqa: E402
-
 from api import app  # noqa: E402  (runs api.py's module-level setup as-is)
 
 # Algo-only background loops; features/span_file.py and
 # features/backtest_engine.py stay on disk (shared features/ module) but the
 # scanner process doesn't need them running. api.py's own
-# _auto_start_alert_checker is skipped below — superseded by the
-# chart_api.start_chart_background_loops() hook added further down, which
-# starts the same alert_checker.py loop deliberately, in this process,
-# because scanner.service (which alert_checker's indicator path imports) is
-# only real here, not symlinked elsewhere.
+# _auto_start_alert_checker is skipped below — the chart domain (REST +
+# alert-checker background loop) has moved to algo.signals entirely (see
+# signal_main.py), so this process no longer mounts chart_api.py at all.
 SKIP_STARTUP_FUNCS = {"_span_params_startup", "_redis_prewarm", "_auto_start_alert_checker", "_auto_start_ticker"}
 
 app.router.on_startup = [f for f in app.router.on_startup if f.__name__ not in SKIP_STARTUP_FUNCS]
-
-
-# ── Chart domain (TradingView chart-state/alerts/indicators) ─────────────────
-# chart_api.py is symlinked in from ../shared/chart_api.py — code lives in
-# shared (not per-service) for clarity, mounted here instead of a 5th uvicorn process
-# since scanner does no per-tick heavy work and already has the scanner/
-# package alert_checker's indicator-bars path needs.
-from chart_api import router as chart_router, start_chart_background_loops  # noqa: E402
-
-app.include_router(chart_router)
-
-
-# ── Signal builder domain (indicator catalog for /signal/strategy page) ──────
-# algo.trade explicitly strips signal_builder, so the algo-admin frontend's
-# COMMON_API_BASE now points here instead. Catalog data is seeded into and
-# served from MongoDB's signal_indicator_catalog collection.
-from signal_builder import router as signal_router  # noqa: E402
-
-app.include_router(signal_router)
-
-
-@app.on_event("startup")
-async def _auto_start_chart_alerts() -> None:
-    asyncio.create_task(start_chart_background_loops())

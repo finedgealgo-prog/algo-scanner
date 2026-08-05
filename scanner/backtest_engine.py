@@ -23,15 +23,14 @@ import numexpr as ne
 import pandas as pd
 from pymongo import MongoClient
 
+import parquet_store
+from features.mongo_data import MONGO_URI, DB_NAME
+
 warnings.simplefilter(action="ignore", category=pd.errors.SettingWithCopyWarning)
 
 # ===============================
 # CONFIG — same collections as sigma-backtest for identical results
 # ===============================
-MONGO_URI = "mongodb://localhost:27017"
-DB_NAME = "stock_data"
-COL_INDEX = "scanner_index_historical_data"
-COL_STOCKS = "scanner_stock_historical_data"
 COL_STOCK_LIST = "scanner_stock_list"
 
 DEFAULT_UNIVERSES = ["nifty_50", "nifty_500"]
@@ -56,17 +55,6 @@ def _mongo_col(collection: str):
     return _get_client()[DB_NAME][collection]
 
 
-def load_collection_as_df(collection, query, projection, index_col=None):
-    docs = list(_mongo_col(collection).find(query, projection))
-    if not docs:
-        return pd.DataFrame()
-    df = pd.DataFrame(docs)
-    if index_col and index_col in df.columns:
-        df[index_col] = pd.to_datetime(df[index_col])
-        df = df.sort_values(index_col).set_index(index_col)
-    return df
-
-
 def ensure_datetime_index(values):
     """Return a sorted DatetimeIndex so date comparisons don't hit ndarray/Timestamp issues."""
     dt_index = pd.DatetimeIndex(pd.to_datetime(values, errors="coerce"))
@@ -83,85 +71,11 @@ def get_latest_index_price(df_index, date, price_col="i_close_price"):
 
 
 def load_index_daily(symbol, start, end):
-    query = {
-        "i_symbol": symbol,
-        "ih_timestamp": {
-            "$gte": pd.Timestamp(start).strftime("%Y-%m-%d"),
-            "$lte": pd.Timestamp(end).strftime("%Y-%m-%d"),
-        },
-    }
-    proj = {
-        "_id": 0,
-        "i_symbol": 1,
-        "ih_timestamp": 1,
-        "i_open_price": 1,
-        "i_high_price": 1,
-        "i_low_price": 1,
-        "i_close_price": 1,
-    }
-    return load_collection_as_df(COL_INDEX, query, proj, index_col="ih_timestamp")
+    return parquet_store.load_index_daily(symbol, start, end)
 
 
 def load_stocks_bulk(symbols, start, end, min_price=None, max_price=None):
-    def safe_float(val):
-        try:
-            return float(val)
-        except (TypeError, ValueError):
-            return None
-
-    min_price = safe_float(min_price) or None
-    max_price = safe_float(max_price) or None
-
-    query = {
-        "h_symbol": {"$in": symbols},
-        "ch_timestamp": {
-            "$gte": pd.Timestamp(start).strftime("%Y-%m-%d"),
-            "$lte": pd.Timestamp(end).strftime("%Y-%m-%d"),
-        },
-    }
-    proj = {
-        "_id": 0,
-        "h_symbol": 1,
-        "ch_timestamp": 1,
-        "ch_opening_price": 1,
-        "ch_high_price": 1,
-        "ch_low_price": 1,
-        "ch_closing_price": 1,
-    }
-
-    df = load_collection_as_df(COL_STOCKS, query, proj)
-    if df.empty:
-        return df
-
-    df["ch_timestamp"] = pd.to_datetime(df.get("ch_timestamp", df.index), errors="coerce")
-    if "ch_timestamp" in df.columns:
-        df = df.dropna(subset=["ch_timestamp"])
-        df = df.sort_values(["h_symbol", "ch_timestamp"])
-    df["ch_closing_price"] = pd.to_numeric(df["ch_closing_price"], errors="coerce").astype(float)
-
-    df = (
-        df.reset_index(drop=True)
-        .groupby(["h_symbol", "ch_timestamp"], as_index=False)
-        .agg(
-            {
-                "ch_opening_price": "first",
-                "ch_high_price": "max",
-                "ch_low_price": "min",
-                "ch_closing_price": "last",
-            }
-        )
-    )
-
-    if min_price is not None or max_price is not None:
-        latest = df.groupby("h_symbol", sort=False)["ch_closing_price"].last().reset_index()
-        if min_price is not None:
-            latest = latest[latest["ch_closing_price"] >= min_price]
-        if max_price is not None:
-            latest = latest[latest["ch_closing_price"] <= max_price]
-        df = df[df["h_symbol"].isin(latest["h_symbol"].tolist())]
-
-    df = df.sort_values(["h_symbol", "ch_timestamp"]).set_index("ch_timestamp")
-    return df
+    return parquet_store.load_stocks_bulk(symbols, start, end, min_price=min_price, max_price=max_price)
 
 
 def _parse_universe_date(date_str: str):

@@ -1283,6 +1283,201 @@ def sync_scanner_daily_market_snapshot() -> dict[str, Any]:
     }
 
 
+# ── live (per-minute) full option chain snapshot ─────────────────────────────
+# Separate from LiveOptionChainCollector (live_option_chain_collector.py),
+# which writes stock_data.option_chain (NIFTY-only, 30-strike window) for
+# algo.simulator's OptionChainManager. This writes option_chain_historical_data
+# / option_chain_index_spot — the collections strike_selector.py's backtest
+# path and algotest_option_chain_sync.py's manual backfill already use —
+# across every F&O index underlying, full unwindowed chain.
+
+# Subset of DHAN_INDEX_SECURITY_IDS / KITE_INDEX_TOKENS that actually has a
+# listed F&O option chain — those two id maps also cover broad NSE indices
+# (NIFTY100, NIFTY500, ...) that have no options at all.
+LIVE_CHAIN_UNDERLYINGS = ("NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY", "SENSEX")
+
+_IST = timezone(timedelta(hours=5, minutes=30))
+_LIVE_CHAIN_INDEXES_READY = False
+
+
+def _ensure_live_chain_indexes(db) -> None:
+    """Same unique natural-key indexes algotest_option_chain_sync.py's manual
+    backfill creates — idempotent, but only worth the round trip once per
+    process, not on every per-minute snapshot call."""
+    global _LIVE_CHAIN_INDEXES_READY
+    if _LIVE_CHAIN_INDEXES_READY:
+        return
+    from pymongo import ASCENDING
+    db._db["option_chain_historical_data"].create_index(
+        [("underlying", ASCENDING), ("expiry", ASCENDING), ("strike", ASCENDING),
+         ("type", ASCENDING), ("timestamp", ASCENDING)],
+        unique=True, background=True, name="chain_natural_key_uq",
+    )
+    db._db["option_chain_index_spot"].create_index(
+        [("underlying", ASCENDING), ("timestamp", ASCENDING)],
+        unique=True, background=True, name="spot_underlying_timestamp_uq",
+    )
+    _LIVE_CHAIN_INDEXES_READY = True
+
+
+def _bulk_insert_ignore_dupes(collection, docs: list[dict]) -> int:
+    """insert_many(ordered=False), swallowing duplicate-key (11000) errors
+    only — a re-run for a minute already written (e.g. two overlapping
+    passes) should not raise. Returns the number of docs actually inserted
+    (best-effort)."""
+    if not docs:
+        return 0
+    from pymongo.errors import BulkWriteError
+    try:
+        collection.insert_many(docs, ordered=False)
+        return len(docs)
+    except BulkWriteError as exc:
+        write_errors = exc.details.get("writeErrors", [])
+        non_dupe = [e for e in write_errors if e.get("code") != 11000]
+        if non_dupe:
+            raise
+        return len(docs) - len(write_errors)
+
+
+def _resolve_live_index_spot(underlyings: list[str], broker: str) -> dict[str, float]:
+    """
+    One batched REST call to get current spot for every underlying in
+    `underlyings`, regardless of which broker is active. No WebSocket
+    dependency by design — algo.scanner deliberately never starts a broker
+    ticker (see scanner_main.py's SKIP_STARTUP_FUNCS), so this always goes
+    through the same REST quote path the once-daily snapshot above uses.
+    """
+    spot: dict[str, float] = {}
+    if broker == "dhan":
+        sec_ids = {u: DHAN_INDEX_SECURITY_IDS[u] for u in underlyings if u in DHAN_INDEX_SECURITY_IDS}
+        if not sec_ids:
+            return spot
+        client_id, access_token = _load_dhan_credentials()
+        if not access_token or not client_id:
+            return spot
+        try:
+            resp = _dhan_quote_post_blocking({"IDX_I": list(sec_ids.values())}, access_token, client_id, timeout=10.0)
+            if resp is not None and resp.status_code == 200:
+                raw = resp.json()
+                idx_data = (raw.get("data") or raw).get("IDX_I") or {}
+                for u, sid in sec_ids.items():
+                    entry = idx_data.get(str(sid)) or idx_data.get(sid) or {}
+                    ltp = float(entry.get("last_price") or 0)
+                    if ltp > 0:
+                        spot[u] = ltp
+        except Exception as exc:
+            print(f"[LIVE CHAIN SNAPSHOT] Dhan index spot fetch error: {exc}", flush=True)
+    else:
+        from features.spot_atm_utils import KITE_INDEX_TOKENS
+        toks = {u: KITE_INDEX_TOKENS[u] for u in underlyings if u in KITE_INDEX_TOKENS}
+        if not toks:
+            return spot
+        try:
+            kite = _build_kite_client_from_config()
+            quotes = kite.quote(list(toks.values())) or {}
+            by_token = {q.get("instrument_token"): q for q in quotes.values()}
+            for u, tok in toks.items():
+                q = by_token.get(tok) or {}
+                ltp = float(q.get("last_price") or 0)
+                if ltp > 0:
+                    spot[u] = ltp
+        except Exception as exc:
+            print(f"[LIVE CHAIN SNAPSHOT] Kite index spot fetch error: {exc}", flush=True)
+    return spot
+
+
+def sync_live_option_chain_snapshot() -> dict[str, Any]:
+    """
+    Snapshot the FULL live option chain (real broker LTP via fetch_full_chain
+    — the same function the live trade-execution path uses) for every F&O
+    index underlying with active contracts in active_option_tokens, across
+    every expiry currently listed for it. Writes into the exact same
+    collections + document shape algotest_option_chain_sync.py's manual
+    AlgoTest-replay backfill uses (option_chain_historical_data,
+    option_chain_index_spot) — same unique natural key, same 'close' field
+    name — so today's data is real broker-granularity instead of only
+    whatever a manual AlgoTest backfill covered, and strike_selector.py's
+    backtest path can read it with zero changes.
+
+    Rows with ltp<=0 this tick are skipped rather than written as a fake 0
+    close — an unpriced strike should be absent from a minute's snapshot,
+    not silently recorded as worthless.
+
+    One pass per call — no internal sleep/loop; see LiveChainSnapshotCollector
+    (live_chain_snapshot_collector.py) for the every-~60s-during-market-hours
+    driver started/stopped from the admin Monitors page.
+    """
+    from features.live_option_chain import fetch_full_chain
+    from features.market_feed_tokens import active_token_broker_filter
+
+    db = MongoData()
+    _ensure_live_chain_indexes(db)
+    broker = _get_active_broker()
+    tok_col = db._db["active_option_tokens"]
+    broker_filter = active_token_broker_filter(db)
+
+    now = datetime.now(_IST)
+    ts = now.strftime("%Y-%m-%dT%H:%M:%S")
+
+    underlyings = sorted({
+        str(u).strip().upper()
+        for u in tok_col.distinct("instrument", broker_filter)
+        if str(u or "").strip().upper() in LIVE_CHAIN_UNDERLYINGS
+    })
+    if not underlyings:
+        print(f"[LIVE CHAIN SNAPSHOT] {ts} no active {broker} underlyings found — skipping", flush=True)
+        return {"underlyings": 0, "chain_rows": 0, "spot_rows": 0}
+
+    spot_by_underlying = _resolve_live_index_spot(underlyings, broker)
+
+    chain_docs: list[dict] = []
+    spot_docs: list[dict] = []
+    for underlying in underlyings:
+        spot_price = spot_by_underlying.get(underlying, 0.0)
+        if spot_price > 0:
+            spot_docs.append({
+                "underlying": underlying, "timestamp": ts,
+                "token": f"LIVE_{underlying}",
+                "close": spot_price, "spot_price": spot_price,
+                "source": f"live_{broker}",
+            })
+
+        expiries = sorted({
+            str(e).strip()[:10]
+            for e in tok_col.distinct("expiry", {**broker_filter, "instrument": underlying})
+            if e
+        })
+        for expiry in expiries:
+            try:
+                chain = fetch_full_chain(db, underlying, expiry, spot_price, leg_id="scanner_live_snapshot")
+            except Exception as exc:
+                print(f"[LIVE CHAIN SNAPSHOT] {underlying} {expiry} fetch error: {exc}", flush=True)
+                continue
+            for side in ("CE", "PE"):
+                for row in chain.get(side) or []:
+                    ltp = float(row.get("ltp") or 0)
+                    if ltp <= 0:
+                        continue
+                    chain_docs.append({
+                        "underlying": underlying, "expiry": expiry,
+                        "strike": float(row.get("strike") or 0), "type": side,
+                        "timestamp": ts, "token": str(row.get("token") or ""),
+                        "close": ltp, "oi": int(row.get("oi") or 0),
+                        "iv": float(row.get("iv") or 0) or None,
+                        "volume": int(row.get("volume") or 0) or None,
+                        "source": f"live_{broker}",
+                    })
+
+    n_chain = _bulk_insert_ignore_dupes(db._db["option_chain_historical_data"], chain_docs)
+    n_spot = _bulk_insert_ignore_dupes(db._db["option_chain_index_spot"], spot_docs)
+    print(
+        f"[LIVE CHAIN SNAPSHOT] {ts} underlyings={len(underlyings)} "
+        f"chain_rows={n_chain}/{len(chain_docs)} spot_rows={n_spot}/{len(spot_docs)}",
+        flush=True,
+    )
+    return {"underlyings": len(underlyings), "chain_rows": n_chain, "spot_rows": n_spot}
+
+
 def _resolve_kite_access_token_error(exc: Exception) -> str | None:
     message = str(exc or "").strip().lower()
     if not message:
@@ -3528,24 +3723,11 @@ def _load_meta(
 def _load_history(symbols: list[str], hist_start: datetime, hist_end: datetime) -> pd.DataFrame:
     if not symbols:
         return pd.DataFrame()
-    db = MongoData()._db
-    query = {
-        "h_symbol": {"$in": symbols},
-        "ch_timestamp": {
-            "$gte": hist_start.strftime("%Y-%m-%d"),
-            "$lte": hist_end.strftime("%Y-%m-%d 23:59:59"),
-        },
-    }
-    projection = {"_id": 0, "h_symbol": 1, "ch_timestamp": 1, "ch_closing_price": 1}
-    rows = list(db[HISTORY_COLLECTION].find(query, projection))
-    df = pd.DataFrame(rows)
+    import parquet_store
+    df = parquet_store.load_stock_closes(symbols, hist_start, hist_end)
     if df.empty:
         return df
     df["h_symbol"] = df["h_symbol"].astype(str).str.strip()
-    df["ch_timestamp"] = pd.to_datetime(df["ch_timestamp"], errors="coerce")
-    df["ch_closing_price"] = pd.to_numeric(df["ch_closing_price"], errors="coerce")
-    df = df.dropna(subset=["h_symbol", "ch_timestamp", "ch_closing_price"])
-    df = df.sort_values(["h_symbol", "ch_timestamp"]).reset_index(drop=True)
     return df
 
 

@@ -35,7 +35,7 @@ import uuid
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from bson import ObjectId
 from fastapi import FastAPI, HTTPException, APIRouter, Query, Request, UploadFile, File, Depends
@@ -59,7 +59,10 @@ from features.broker_gateway import (
     broker_ticker_manager           as ticker_manager,
 )
 from features.mock_ticker import mock_ticker_manager
+from features.market_hours_scheduler import run_market_hours_scheduler
 from scanner.router import router as scanner_router
+from scanner.live_option_chain_collector import collector as _live_option_chain_collector
+from scanner.live_chain_snapshot_collector import collector as _live_chain_snapshot_collector
 from features.broker_gateway import (
     load_broker_instruments         as _load_kite_instruments,
     BROKER_INDEX_TOKENS             as KITE_INDEX_TOKENS,
@@ -1969,6 +1972,30 @@ async def _auto_start_ticker():
     asyncio.create_task(_bg())
 
 
+@app.on_event("startup")
+async def _collectors_market_hours_schedule():
+    """
+    Auto-stop the Live Option Chain Collector and Live Option Chain Snapshot
+    (the "day snapshot" stock/option-chain data fetchers) after market
+    close, auto-start both again ~09:10 next weekday — see
+    features/market_hours_scheduler.py. Their own /live-collector/{start,
+    stop} and /live-chain-snapshot/{start,stop} endpoints remain available
+    as a manual override at any time.
+    """
+    asyncio.create_task(run_market_hours_scheduler(
+        name="live-option-chain-collector",
+        start_fn=_live_option_chain_collector.start,
+        stop_fn=_live_option_chain_collector.stop,
+        is_running_fn=_live_option_chain_collector.status,
+    ))
+    asyncio.create_task(run_market_hours_scheduler(
+        name="live-chain-snapshot",
+        start_fn=_live_chain_snapshot_collector.start,
+        stop_fn=_live_chain_snapshot_collector.stop,
+        is_running_fn=_live_chain_snapshot_collector.status,
+    ))
+
+
 _SCANNER_SNAPSHOT_IST = timezone(timedelta(hours=5, minutes=30))
 _SCANNER_SNAPSHOT_HOUR_IST = 15  # 15:45 IST — 15 min after NSE close, settlement tick has landed by then
 _SCANNER_SNAPSHOT_MINUTE_IST = 45
@@ -2016,6 +2043,13 @@ async def _auto_daily_scanner_snapshot():
                 log.info("[SCANNER SNAPSHOT] auto run completed: %s", result)
             except Exception:
                 log.exception("[SCANNER SNAPSHOT] auto run failed")
+            else:
+                try:
+                    from export_historical_parquet import export_all
+                    parquet_result = await asyncio.to_thread(export_all)
+                    log.info("[SCANNER SNAPSHOT] parquet re-export completed: %s", parquet_result)
+                except Exception:
+                    log.exception("[SCANNER SNAPSHOT] parquet re-export failed")
             # Past-due guard: a slow/failed run above shouldn't make the next
             # target-time computation immediately re-fire for the same day.
             await asyncio.sleep(60)
@@ -3577,6 +3611,320 @@ async def simulator_place_manual_order(body: ManualOrderRequest, current_user: d
     except Exception as exc:
         print(f"[PLACE_ORDER] telegram notify error={exc}", flush=True)
     return result
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# Trading Terminal — virtual/paper orders served from the scanner/common host
+# (not the dedicated live-order service). Persists to terminal_* collections.
+# ════════════════════════════════════════════════════════════════════════════
+
+class TerminalOrderIn(BaseModel):
+    kind: Literal["index", "stock", "strike"]
+    instrument: str
+    underlying: str
+    expiry: str = ""
+    strike: float = 0.0
+    option_type: str = ""
+    side: Literal["BUY", "SELL"]
+    quantity: int
+    product: Literal["MIS", "NRML"] = "MIS"
+
+
+TERMINAL_STARTING_CASH = 10000.0
+
+
+def _terminal_user_id(current_user: dict) -> str:
+    return str(current_user.get("_id") or "terminal_anonymous")
+
+
+def _terminal_instrument_key(
+    kind: str,
+    underlying: str,
+    expiry: str = "",
+    strike: float = 0.0,
+    option_type: str = "",
+) -> str:
+    base = f"{kind}:{str(underlying or '').strip().upper()}"
+    if kind == "strike":
+        return f"{base}:{expiry}:{float(strike):.2f}:{str(option_type or '').strip().upper()}"
+    return base
+
+
+def _ensure_terminal_balance(raw_db, user_id: str, now_str: str) -> dict:
+    balances = raw_db["terminal_balances"]
+    doc = balances.find_one({"user_id": user_id})
+    if doc:
+        return doc
+    balance_doc = {
+        "user_id": user_id,
+        "starting_cash": TERMINAL_STARTING_CASH,
+        "available_cash": TERMINAL_STARTING_CASH,
+        "updated_at": now_str,
+        "created_at": now_str,
+    }
+    balances.insert_one(balance_doc)
+    return balance_doc
+
+
+async def _resolve_terminal_price(payload: "TerminalOrderIn", raw_db) -> float:
+    def _cached_underlying_price() -> float:
+        spot_doc = get_cached_spot_doc(raw_db, payload.underlying or payload.instrument)
+        for field_name in ("spot_price", "ltp", "close", "last_price", "price"):
+            try:
+                value = float((spot_doc or {}).get(field_name) or 0)
+            except (TypeError, ValueError):
+                value = 0.0
+            if value > 0:
+                return value
+        return 0.0
+
+    if payload.kind == "strike":
+        leg = ManualOrderLeg(
+            underlying=payload.underlying,
+            expiry=payload.expiry,
+            strike=payload.strike,
+            option_type=payload.option_type,
+            side=payload.side,
+            quantity=payload.quantity,
+            order_type="LTP",
+            product=payload.product,
+        )
+        return await _resolve_ltp_price(leg, raw_db)
+
+    if payload.kind == "stock":
+        sec_id = await asyncio.to_thread(_get_dhan_equity_sec_id, payload.underlying)
+        if sec_id:
+            quote_map = await asyncio.to_thread(_fetch_dhan_market_data, "NSE_EQ", [int(sec_id)], _shared_mongo)
+            live_ltp = float((quote_map.get(str(sec_id)) or {}).get("ltp") or 0)
+            if live_ltp > 0:
+                return live_ltp
+        return _cached_underlying_price()
+
+    from features.spot_atm_utils import _get_live_spot_for_underlying
+
+    live_spot = float(await asyncio.to_thread(_get_live_spot_for_underlying, payload.underlying) or 0)
+    if live_spot > 0:
+        return live_spot
+    return _cached_underlying_price()
+
+
+def _apply_terminal_order_side_effects(raw_db, user_id: str, body: "TerminalOrderIn", price: float, now_str: str) -> dict:
+    balances = raw_db["terminal_balances"]
+    positions = raw_db["terminal_positions"]
+    instrument_key = _terminal_instrument_key(body.kind, body.underlying, body.expiry, body.strike, body.option_type)
+
+    balance_doc = _ensure_terminal_balance(raw_db, user_id, now_str)
+    gross_value = float(price) * int(body.quantity)
+    cash_delta = -gross_value if body.side == "BUY" else gross_value
+    next_cash = float(balance_doc.get("available_cash") or TERMINAL_STARTING_CASH) + cash_delta
+    if next_cash < -1e-9:
+        raise ValueError("Insufficient available cash.")
+
+    balances.update_one(
+        {"user_id": user_id},
+        {"$set": {"available_cash": round(next_cash, 2), "updated_at": now_str}},
+        upsert=True,
+    )
+
+    existing = positions.find_one({"user_id": user_id, "instrument_key": instrument_key})
+    existing_qty = float(existing.get("net_quantity") or 0) if existing else 0.0
+    existing_avg = float(existing.get("avg_price") or 0) if existing else 0.0
+    signed_qty = float(body.quantity if body.side == "BUY" else -body.quantity)
+    next_qty = existing_qty + signed_qty
+
+    if abs(existing_qty) < 1e-9:
+        next_avg = price
+    elif existing_qty * signed_qty > 0:
+        next_avg = ((abs(existing_qty) * existing_avg) + (abs(signed_qty) * price)) / abs(next_qty)
+    elif abs(existing_qty) > abs(signed_qty):
+        next_avg = existing_avg
+    elif abs(existing_qty) < abs(signed_qty):
+        next_avg = price
+    else:
+        next_avg = 0.0
+
+    if abs(next_qty) < 1e-9:
+        positions.delete_one({"user_id": user_id, "instrument_key": instrument_key})
+    else:
+        position_doc = {
+            "user_id": user_id,
+            "instrument_key": instrument_key,
+            "kind": body.kind,
+            "instrument": body.instrument,
+            "underlying": body.underlying,
+            "expiry": body.expiry,
+            "strike": body.strike,
+            "option_type": body.option_type,
+            "product": body.product,
+            "net_quantity": int(next_qty),
+            "avg_price": round(float(next_avg), 4),
+            "last_price": round(float(price), 4),
+            "last_side": body.side,
+            "updated_at": now_str,
+            "created_at": (existing or {}).get("created_at", now_str),
+        }
+        positions.update_one(
+            {"user_id": user_id, "instrument_key": instrument_key},
+            {"$set": position_doc},
+            upsert=True,
+        )
+
+    return {
+        "instrument_key": instrument_key,
+        "available_cash": round(next_cash, 2),
+        "net_quantity": int(next_qty),
+        "avg_price": round(float(next_avg), 4),
+    }
+
+
+def _terminal_doc_to_price_payload(doc: dict) -> "TerminalOrderIn":
+    return TerminalOrderIn(
+        kind=str(doc.get("kind") or "stock"),
+        instrument=str(doc.get("instrument") or doc.get("underlying") or ""),
+        underlying=str(doc.get("underlying") or doc.get("instrument") or ""),
+        expiry=str(doc.get("expiry") or ""),
+        strike=float(doc.get("strike") or 0),
+        option_type=str(doc.get("option_type") or ""),
+        side="BUY",
+        quantity=max(int(abs(doc.get("net_quantity") or doc.get("quantity") or 1)), 1),
+        product=str(doc.get("product") or "MIS"),
+    )
+
+
+async def _build_terminal_dashboard(raw_db, user_id: str) -> dict:
+    now_str = datetime.now(IST).strftime("%Y-%m-%dT%H:%M:%S")
+
+    def _load_snapshot():
+        balance = _ensure_terminal_balance(raw_db, user_id, now_str)
+        orders = list(raw_db["terminal_orders"].find({"user_id": user_id}).sort("placed_at", -1).limit(200))
+        positions = list(raw_db["terminal_positions"].find({"user_id": user_id}).sort("updated_at", -1))
+        return balance, orders, positions
+
+    balance_doc, order_docs, position_docs = await asyncio.to_thread(_load_snapshot)
+
+    positions_out = []
+    holdings_out = []
+    total_pnl = 0.0
+
+    for pos in position_docs:
+        current_price = await _resolve_terminal_price(_terminal_doc_to_price_payload(pos), raw_db)
+        avg_price = float(pos.get("avg_price") or 0)
+        net_quantity = int(pos.get("net_quantity") or 0)
+        abs_quantity = abs(net_quantity)
+        mtm = round((current_price - avg_price) * net_quantity, 2)
+        invested_amount = round(abs_quantity * avg_price, 2)
+        current_value = round(abs_quantity * current_price, 2)
+        total_pnl += mtm
+        row = {
+            "instrument_key": pos.get("instrument_key"),
+            "instrument": pos.get("instrument"),
+            "underlying": pos.get("underlying"),
+            "kind": pos.get("kind"),
+            "expiry": pos.get("expiry") or "",
+            "strike": float(pos.get("strike") or 0),
+            "option_type": pos.get("option_type") or "",
+            "product": pos.get("product") or "MIS",
+            "net_quantity": net_quantity,
+            "display_quantity": abs_quantity,
+            "side": "BUY" if net_quantity >= 0 else "SELL",
+            "avg_price": round(avg_price, 2),
+            "current_price": round(current_price, 2),
+            "invested_amount": invested_amount,
+            "current_value": current_value,
+            "pnl": mtm,
+            "pnl_pct": round((mtm / invested_amount) * 100, 2) if invested_amount > 0 else 0.0,
+            "updated_at": pos.get("updated_at") or "",
+        }
+        positions_out.append(row)
+        if net_quantity > 0:
+            holdings_out.append(row)
+
+    orders_out = []
+    for order in order_docs:
+        current_price = await _resolve_terminal_price(_terminal_doc_to_price_payload(order), raw_db)
+        side = str(order.get("side") or "BUY").upper()
+        filled_price = float(order.get("price") or 0)
+        qty = int(order.get("quantity") or 0)
+        signed_qty = qty if side == "BUY" else -qty
+        pnl = round((current_price - filled_price) * signed_qty, 2)
+        orders_out.append({
+            "id": str(order.get("_id") or order.get("id") or ""),
+            "instrument": order.get("instrument") or "",
+            "underlying": order.get("underlying") or "",
+            "kind": order.get("kind") or "stock",
+            "product": order.get("product") or "MIS",
+            "side": side,
+            "quantity": qty,
+            "price": round(filled_price, 2),
+            "current_price": round(current_price, 2),
+            "pnl": pnl,
+            "status": order.get("status") or "FILLED",
+            "placed_at": order.get("placed_at") or "",
+        })
+
+    return {
+        "status": "success",
+        "balance": {
+            "starting_cash": round(float(balance_doc.get("starting_cash") or TERMINAL_STARTING_CASH), 2),
+            "available_cash": round(float(balance_doc.get("available_cash") or TERMINAL_STARTING_CASH), 2),
+        },
+        "summary": {
+            "total_pnl": round(total_pnl, 2),
+            "positions_count": len(positions_out),
+            "holdings_count": len(holdings_out),
+            "orders_count": len(orders_out),
+        },
+        "orders": orders_out,
+        "positions": positions_out,
+        "holdings": holdings_out,
+    }
+
+
+@app.get("/terminal/dashboard")
+async def terminal_dashboard(current_user: dict = Depends(app_auth.get_current_user)) -> dict:
+    return await _build_terminal_dashboard(_shared_mongo._db, _terminal_user_id(current_user))
+
+
+@app.post("/terminal/place-order")
+async def terminal_place_order(body: TerminalOrderIn, current_user: dict = Depends(app_auth.get_current_user)) -> dict:
+    raw_db = _shared_mongo._db
+    price = await _resolve_terminal_price(body, raw_db)
+    if price <= 0:
+        return {"status": "error", "message": "Price unavailable for this instrument. Try again."}
+
+    user_id = _terminal_user_id(current_user)
+    now_str = datetime.now(IST).strftime("%Y-%m-%dT%H:%M:%S")
+    try:
+        side_effects = await asyncio.to_thread(_apply_terminal_order_side_effects, raw_db, user_id, body, price, now_str)
+    except ValueError as exc:
+        return {"status": "error", "message": str(exc)}
+
+    doc = {
+        "user_id": user_id,
+        "kind": body.kind,
+        "instrument": body.instrument,
+        "underlying": body.underlying,
+        "expiry": body.expiry,
+        "strike": body.strike,
+        "option_type": body.option_type,
+        "side": body.side,
+        "quantity": body.quantity,
+        "product": body.product,
+        "price": price,
+        "status": "FILLED",
+        "order_type": "PAPER_MARKET",
+        "placed_at": now_str,
+        "instrument_key": side_effects["instrument_key"],
+        "available_cash_after": side_effects["available_cash"],
+        "net_quantity_after": side_effects["net_quantity"],
+        "avg_price_after": side_effects["avg_price"],
+    }
+
+    def _insert() -> str:
+        return str(raw_db["terminal_orders"].insert_one(doc).inserted_id)
+
+    doc["id"] = await asyncio.to_thread(_insert)
+    return {"status": "success", "order": doc}
 
 
 

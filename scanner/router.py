@@ -48,6 +48,9 @@ from .service import (
     sync_stocks_industry_from_nse,
 )
 
+from .live_option_chain_collector import collector as _live_option_chain_collector
+from .live_chain_snapshot_collector import collector as _live_chain_snapshot_collector
+
 router = APIRouter(prefix="/scanner", tags=["scanner"])
 
 
@@ -320,6 +323,79 @@ async def scanner_historical_data_sync_status() -> dict[str, Any]:
         return get_scanner_historical_sync_status()
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.post("/live-collector/start")
+@router.get("/live-collector/start")
+async def start_live_option_chain_collector() -> dict[str, Any]:
+    """Starts the WS-tick-driven NIFTY option chain snapshot collector —
+    builds the pre-market contract list, warms the Dhan chain feed, and
+    stores one snapshot per contract per minute into stock_data.option_chain
+    (the same collection OptionChainManager reads for backtests). Moved here
+    from algo.simulator (lighter load on algo.scanner) — logic unchanged,
+    see live_option_chain_collector.py. GET is registered alongside POST so
+    the admin Monitors page's "Start" button (and a plain browser link) can
+    trigger it the same way other rows there do — see algo-admin's
+    src/pages/Admin/Monitors.tsx."""
+    try:
+        return _live_option_chain_collector.start()
+    except Exception as exc:
+        return {"status": "error", "message": str(exc)}
+
+
+@router.post("/live-collector/stop")
+async def stop_live_option_chain_collector() -> dict[str, Any]:
+    try:
+        return _live_option_chain_collector.stop()
+    except Exception as exc:
+        return {"status": "error", "message": str(exc)}
+
+
+@router.get("/live-collector/status")
+async def live_option_chain_collector_status() -> dict[str, Any]:
+    return _live_option_chain_collector.status()
+
+
+@router.get("/live-collector/snapshot-now")
+async def snapshot_live_option_chain_now() -> dict[str, Any]:
+    """Manual one-shot check: inserts whatever real-tick data is available
+    right now for every active_option_tokens contract, immediately — no
+    background thread, no waiting for the next minute boundary the way
+    /live-collector/start's continuous loop does. Hit this, then check
+    stock_data.option_chain straight away."""
+    try:
+        return _live_option_chain_collector.snapshot_now()
+    except Exception as exc:
+        return {"status": "error", "message": str(exc)}
+
+
+@router.post("/live-chain-snapshot/start")
+@router.get("/live-chain-snapshot/start")
+async def start_live_chain_snapshot() -> dict[str, Any]:
+    """Arms the per-minute full option-chain snapshot collector (real broker
+    LTP into option_chain_historical_data / option_chain_index_spot) — does
+    NOT run until this is called. Separate from /live-collector above, which
+    feeds a different collection (stock_data.option_chain) for a different
+    consumer. GET is registered alongside POST so the admin Monitors page's
+    "Start" button (and a plain browser link) can trigger it the same way
+    other rows there do."""
+    try:
+        return _live_chain_snapshot_collector.start()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.post("/live-chain-snapshot/stop")
+async def stop_live_chain_snapshot() -> dict[str, Any]:
+    try:
+        return _live_chain_snapshot_collector.stop()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.get("/live-chain-snapshot/status")
+async def live_chain_snapshot_status() -> dict[str, Any]:
+    return _live_chain_snapshot_collector.status()
 
 
 @router.get("/remove_universe_field")
