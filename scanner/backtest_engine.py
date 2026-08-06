@@ -518,6 +518,9 @@ def ultra_backtest_v2_fastest_fixed_v3(
     UNIVERSE_INDEXES=None,
     SAVE_EXCEL=False,
     score_model="current",
+    STOPLOSS_STATUS=False,
+    STOPLOSS_PERCENT=None,
+    STOPLOSS_BUY_TIMING="same_day",  # "same_day" or "next_day" — timing of the replacement buy only
 ):
     print("REBALANCE_FREQUENCY",REBALANCE_FREQUENCY,"INDICATOR_NAME",INDICATOR_NAME,"INDICATOR_PARAMS",INDICATOR_PARAMS)
     """
@@ -920,6 +923,7 @@ def ultra_backtest_v2_fastest_fixed_v3(
     # ===================================================
     cash = float(initial_capital)
     holdings = {}
+    holdings_buy_price = {}
     trades, equity, snapshots = [], [], []
     first_trading_day = df_index.index.min()
 
@@ -932,6 +936,7 @@ def ultra_backtest_v2_fastest_fixed_v3(
     state = initial_signal
     last_signal = initial_signal
     regime_events: list[dict] = []
+    stoploss_events: list[dict] = []
 
     # ------------------------------------------------------
     # Main event loop
@@ -975,6 +980,7 @@ def ultra_backtest_v2_fastest_fixed_v3(
                                 holdings[sym] = remain
                             else:
                                 holdings.pop(sym, None)
+                                holdings_buy_price.pop(sym, None)
                             print(f"    [SELL HALF] {sym} qty={sell_qty} @ {px}")
                             event_sold_stocks.append({"symbol": sym, "qty": sell_qty, "price": float(px), "action": "SELL_HALF_SIGNAL"})
                     else:
@@ -983,6 +989,7 @@ def ultra_backtest_v2_fastest_fixed_v3(
                             rank = int(snap.loc[sym, "rank"])
                         add_trade_row(sell_d, sym, "SELL_SIGNAL", qty, px, rank)
                         holdings.pop(sym, None)
+                        holdings_buy_price.pop(sym, None)
                         print(f"    [SOLD] {sym} qty={qty} @ {px} | rank={rank}")
                         event_sold_stocks.append({"symbol": sym, "qty": qty, "price": float(px), "rank": rank, "action": "SELL_SIGNAL"})
 
@@ -1053,6 +1060,7 @@ def ultra_backtest_v2_fastest_fixed_v3(
                                 qty = int(alloc // p)
                                 if qty > 0:
                                     holdings[sym] = qty
+                                    holdings_buy_price[sym] = float(p)
                                     buy_block.append((sym, qty, float(p)))
                                 else:
                                     print(f"    [SKIP] {sym} — qty=0 (alloc={alloc:.2f}, price={p})")
@@ -1084,6 +1092,76 @@ def ultra_backtest_v2_fastest_fixed_v3(
                 last_signal = sig
 
         # ==================================================
+        # Per-Stock Stop-Loss (checked every trading day)
+        # ==================================================
+        if STOPLOSS_STATUS and STOPLOSS_PERCENT and state == "Buy" and ("gold_bees" not in holdings):
+            stopped_syms = []
+            for sym, qty in list(holdings.items()):
+                if sym == "gold_bees":
+                    continue
+                buy_px = holdings_buy_price.get(sym)
+                if not buy_px:
+                    continue
+                cur_px = fast_price(sym, ev_date)
+                if not cur_px:
+                    continue
+                loss_pct = (cur_px - buy_px) / buy_px * 100.0
+                if loss_pct <= -abs(STOPLOSS_PERCENT):
+                    rank = None
+                    sl_snap = sigma_score_snapshot(ev_date)
+                    if sl_snap is not None and sym in sl_snap.index:
+                        rank = int(sl_snap.loc[sym, "rank"])
+                    add_trade_row(ev_date, sym, "SELL_STOPLOSS", qty, cur_px, rank)
+                    holdings.pop(sym, None)
+                    holdings_buy_price.pop(sym, None)
+                    stopped_syms.append(sym)
+                    stoploss_events.append({
+                        "date": str(ev_date.date() if hasattr(ev_date, "date") else ev_date),
+                        "day": ev_date.strftime("%A") if hasattr(ev_date, "strftime") else "",
+                        "action": "SELL_STOPLOSS",
+                        "symbol": sym,
+                        "qty": int(qty),
+                        "price": float(cur_px),
+                        "rank": rank,
+                        "buy_price": float(buy_px),
+                        "loss_percent": round(float(loss_pct), 2),
+                    })
+                    print(f"  [STOPLOSS] {sym} qty={qty} @ {cur_px} | buy_px={buy_px} | loss%={loss_pct:.2f}")
+
+            if stopped_syms:
+                sl_buy_d = ev_date if str(STOPLOSS_BUY_TIMING).lower() == "same_day" else next_trading_day(ev_date)
+                sl_snap = sigma_score_snapshot(sl_buy_d)
+                if sl_snap is not None and not sl_snap.empty:
+                    ranked_syms = sl_snap.index.tolist()  # already sorted by rank ascending
+                    candidates = [s for s in ranked_syms if s not in holdings and s not in stopped_syms][: len(stopped_syms)]
+                    if candidates and cash > 0:
+                        alloc = cash / len(candidates)
+                        buy_block = []
+                        for sym in candidates:
+                            p = fast_price(sym, sl_buy_d)
+                            if p and p > 0:
+                                qty = int(alloc // p)
+                                if qty > 0:
+                                    holdings[sym] = qty
+                                    holdings_buy_price[sym] = float(p)
+                                    buy_block.append((sym, qty, float(p)))
+                        for sym, qty, px in buy_block:
+                            rank = int(sl_snap.loc[sym, "rank"]) if "rank" in sl_snap.columns else None
+                            add_trade_row(sl_buy_d, sym, "BUY_STOPLOSS_REENTRY", qty, px, rank)
+                            stoploss_events.append({
+                                "date": str(sl_buy_d.date() if hasattr(sl_buy_d, "date") else sl_buy_d),
+                                "day": sl_buy_d.strftime("%A") if hasattr(sl_buy_d, "strftime") else "",
+                                "action": "BUY_STOPLOSS_REENTRY",
+                                "symbol": sym,
+                                "qty": int(qty),
+                                "price": float(px),
+                                "rank": rank,
+                                "buy_price": "",
+                                "loss_percent": "",
+                            })
+                            print(f"  [STOPLOSS REBUY] {sym} qty={qty} @ {px} | rank={rank}")
+
+        # ==================================================
         # Rebalance Events (Only when holding stocks)
         # ==================================================
         if (ev_date in effective_rebalance_dates) and state == "Buy" and ("gold_bees" not in holdings):
@@ -1105,6 +1183,7 @@ def ultra_backtest_v2_fastest_fixed_v3(
                 if (sym not in snap.index) or (snap.loc[sym, "rank"] > EXIT_RANK):
                     px = fast_price(sym, sell_d)
                     holdings.pop(sym, None)  # always remove, even if no price
+                    holdings_buy_price.pop(sym, None)
                     if px:
                         sell_block.append((sym, qty, px))
 
@@ -1133,6 +1212,7 @@ def ultra_backtest_v2_fastest_fixed_v3(
                             qty = int(alloc // p)
                             if qty > 0:
                                 holdings[sym] = qty
+                                holdings_buy_price[sym] = float(p)
                                 buy_block.append((sym, qty, float(p)))
                     for sym, qty, px in buy_block:
                         rank = int(snap.loc[sym, "rank"]) if "rank" in snap.columns else None
@@ -2359,6 +2439,7 @@ def ultra_backtest_v2_fastest_fixed_v3(
     print("✅ ultra_backtest_v2_fastest_fixed_v3 completed successfully!")
     print(f"🕒 Elapsed: {time.time() - t0:.2f}s")
     print(f"📊 Regime Events: {len(regime_events)} events → {regime_events}")
+    print(f"📊 Stoploss Events: {len(stoploss_events)} events → {stoploss_events}")
 
-    return metrics, df_eq, df_tr, monthly_json, monthly_stats_json, equity_curve_json, snapshots_df, monthly_equity_json, yearly_equity_json, daily_json, weekly_json, monthly_final_json, yearly_final_json, quarterly_json, monthly_closed_json, closed_df, regime_events
+    return metrics, df_eq, df_tr, monthly_json, monthly_stats_json, equity_curve_json, snapshots_df, monthly_equity_json, yearly_equity_json, daily_json, weekly_json, monthly_final_json, yearly_final_json, quarterly_json, monthly_closed_json, closed_df, regime_events, stoploss_events
 

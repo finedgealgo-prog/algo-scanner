@@ -4949,6 +4949,12 @@ def run_scanner_backtest(payload: dict[str, Any]) -> dict[str, Any]:
     uncorrelated_asset_allocation = int(payload.get("uncorrelated_asset_allocation", 85))
     gold_alloc = uncorrelated_asset_allocation / 100.0 if uncorrelated_asset_type == "gold_bees" else DEFAULT_GOLD_ALLOC
 
+    # Per-stock stop-loss auto-rebalance
+    stoploss_status = bool(payload.get("stoploss_status", False))
+    stoploss_percent = payload.get("stoploss_percent")
+    stoploss_percent = float(stoploss_percent) if stoploss_percent not in (None, "") else None
+    stoploss_rebalance_timing = str(payload.get("stoploss_rebalance_timing", "same_day"))
+
     print(f"\n=== Scanner Backtest Configuration ===")
     print(f"Strategy: {strategy_name} | Indexes: {indexes} | Capital: {capital:,.0f}")
     print(f"Entry: {entry_rank} | Exit: {exit_rank} | {rebalance_frequency} day={rebalance_day}")
@@ -4983,6 +4989,7 @@ def run_scanner_backtest(payload: dict[str, Any]) -> dict[str, Any]:
         monthly_closed_json,
         closed_trades_df,
         regime_events,
+        stoploss_events,
     ) = ultra_backtest_v2_fastest_fixed_v3(
         df_index,
         df_stocks,
@@ -5002,6 +5009,9 @@ def run_scanner_backtest(payload: dict[str, Any]) -> dict[str, Any]:
         REBALANCE_FREQUENCY=rebalance_frequency,
         REBALANCE_DAY_OR_WEEK=rebalance_day,
         UNIVERSE_INDEXES=indexes,
+        STOPLOSS_STATUS=stoploss_status,
+        STOPLOSS_PERCENT=stoploss_percent,
+        STOPLOSS_BUY_TIMING=stoploss_rebalance_timing,
     )
 
     # Serialize closed_trades_df — convert Timestamps to ISO strings for JSON safety
@@ -5062,6 +5072,7 @@ def run_scanner_backtest(payload: dict[str, Any]) -> dict[str, Any]:
         "quarterly_json": quarterly_json,
         "monthly_closed_json": monthly_closed_json,
         "regime_events": regime_events or [],
+        "stoploss_events": stoploss_events or [],
     }
 
 

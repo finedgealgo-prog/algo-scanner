@@ -7135,6 +7135,559 @@ def _fetch_dhan_ltp(segment: str, sec_ids: list[int], db) -> dict[str, float]:
     return {k: v["ltp"] for k, v in _fetch_dhan_market_data(segment, sec_ids, db).items()}
 
 
+@app.on_event("startup")
+def _dhan_equity_master_prewarm_startup():
+    """
+    Warm _FNO_MASTER_CACHE (this process's own copy — module-level dict,
+    NOT shared with algo.websocket's separate prewarm of the same CSV) in a
+    background thread at boot, so the first real caller of
+    _get_dhan_equity_sec_id()/_get_dhan_fno_master() (e.g. /rest-option-chain)
+    doesn't pay the ~5-6s Dhan scrip-master CSV download+parse cost inline.
+    Confirmed live (2026-08-06, on algo.trade before this endpoint moved
+    here): this was ~82% of one /rest-option-chain request's total time
+    (5.6s of 6.8s) — the Dhan quote call itself was ~1.2s. Every process
+    keeps its own process-local cache, so this needs to run in this
+    process too, not just in algo.websocket's dhan_ticker.py.
+    """
+    def _warm():
+        try:
+            t0 = time.perf_counter()
+            master = _get_dhan_fno_master()
+            equity_count = len(_FNO_MASTER_CACHE.get("equity_ids") or {})
+            print(f"[EQUITY MASTER PREWARM] symbols={len(master)} equities={equity_count} "
+                  f"took={(time.perf_counter() - t0) * 1000:.0f}ms", flush=True)
+        except Exception as exc:
+            log.warning("[EQUITY MASTER PREWARM] error: %s", exc)
+
+    threading.Thread(target=_warm, daemon=True, name="dhan_equity_master_prewarm").start()
+
+
+def _fetch_dhan_market_data_multi_nowait(sids_by_segment: dict[str, list[int]], db) -> dict[str, dict[str, dict]]:
+    """
+    Sends EVERY segment (e.g. NSE_FNO chain tokens + NSE_EQ spot token) in
+    ONE Dhan /marketfeed/quote request body instead of one call per segment —
+    Dhan's quote endpoint accepts multiple top-level segment keys in a
+    single request and returns data keyed by segment, which our parsing
+    already assumed (see `data.get(segment)` below). This uses exactly ONE
+    shared rate-gate slot for the whole /rest-option-chain response instead
+    of two, roughly halving the total wait versus a two-separate-calls version.
+
+    Up to 2 blocking attempts (dhan_quote_post_blocking, which waits for its
+    own rate-gate slot each time) — NOT a pure skip-if-busy single attempt:
+    that returned instantly but empty (0/no data) far too often for a stock
+    queried for the first time in this process (no last-good cache yet to
+    fall back on), confirmed live. The consistently observed pattern that
+    day was "attempt 1 gets 429, attempt 2 succeeds" (Dhan's real
+    per-account window running ~2x our assumed 1.05s interval) — so 2
+    attempts reliably gets real data in ~2.1-2.2s.
+
+    Returns {segment: {sec_id_str: entry}}.
+    """
+    sids_by_segment = {seg: ids for seg, ids in sids_by_segment.items() if ids}
+    if not sids_by_segment:
+        return {}
+    raw_db = db._db if hasattr(db, "_db") else db
+    cfg = raw_db["kite_market_config"].find_one({"broker": "dhan", "enabled": True}) or {}
+    access_token = str(cfg.get("access_token") or "").strip()
+    client_id = str(cfg.get("user_id") or cfg.get("dhan_client_id") or "").strip()
+    if not access_token or not client_id:
+        return {}
+
+    result: dict[str, dict[str, dict]] = {seg: {} for seg in sids_by_segment}
+
+    # WS ltp_map is bare-numeric-keyed regardless of segment — resolve
+    # whatever's already warm before touching Dhan at all.
+    remaining: dict[str, list[int]] = {}
+    try:
+        from features.dhan_ticker import dhan_ticker_manager as _dtm  # type: ignore
+        for segment, sids in sids_by_segment.items():
+            still_missing = []
+            for sid in sids:
+                sid_str = str(sid)
+                ws_ltp = float(_dtm.ltp_map.get(sid_str) or 0)
+                if ws_ltp > 0:
+                    result[segment][sid_str] = {"ltp": ws_ltp, "oi": int(_dtm.oi_map.get(sid_str) or 0), "bid": 0.0, "ask": 0.0, "prev_close": 0.0}
+                else:
+                    still_missing.append(sid)
+            if still_missing:
+                remaining[segment] = still_missing
+    except Exception:
+        remaining = dict(sids_by_segment)
+
+    if remaining:
+        from features.broker_gateway import dhan_quote_post_blocking
+        for _attempt in range(2):
+            try:
+                r = dhan_quote_post_blocking(remaining, access_token, client_id, timeout=15.0)
+                if r is None:
+                    continue
+                if r.status_code == 200:
+                    raw = r.json()
+                    print(f"[RAW DHAN QUOTE RESPONSE] segments={list(remaining.keys())} "
+                          f"body={json.dumps(raw)}", flush=True)
+                    data_by_segment = raw.get("data") or raw
+                    for segment in remaining:
+                        data = data_by_segment.get(segment) or {}
+                        for sid, info in data.items():
+                            if not isinstance(info, dict):
+                                continue
+                            entry = {
+                                "ltp": float(info.get("last_price") or 0),
+                                "oi":  int(info.get("oi") or 0),
+                                "bid": 0.0, "ask": 0.0,
+                                "volume": int(info.get("volume") or 0),
+                                "prev_close": float((info.get("ohlc") or {}).get("close") or 0),
+                            }
+                            result[segment][str(sid)] = entry
+                            if entry["ltp"] > 0:
+                                _DHAN_MARKET_DATA_LAST_GOOD[f"{segment}:{sid}"] = entry
+                    break
+            except Exception as _e:
+                log.warning("[DHAN QUOTE MULTI NOWAIT] error=%s attempt=%d", _e, _attempt)
+
+    for segment, sids in sids_by_segment.items():
+        for sid in sids:
+            sid_str = str(sid)
+            if sid_str not in result[segment] or not result[segment][sid_str].get("ltp"):
+                cached = _DHAN_MARKET_DATA_LAST_GOOD.get(f"{segment}:{sid_str}")
+                if cached:
+                    result[segment][sid_str] = cached
+    return result
+
+
+def _build_chain_payload_sync(normalized: str, expiry: str) -> dict:
+    """
+    Pure-REST F&O option chain for any Dhan-listed underlying (built for
+    individual stocks, but works for indices too — the query is generic).
+
+    Reads spot price from the live ticker's spot_map first (instant,
+    in-memory — populated for every F&O stock by dhan_ticker.py's
+    _prewarm_all_stock_spots at ticker startup, same mechanism the 6
+    indices already used), falling back to a REST resolve + combined Dhan
+    quote call only if spot_map doesn't have it yet (e.g. algo.websocket
+    just restarted, or the ticker is stopped after market hours — Dhan's
+    REST quote still returns the last traded price either way).
+
+    Contracts come from active_option_tokens (broker=dhan) — same source
+    /algo/get_active_tokens/{instrument} populates. If that's empty for
+    this underlying, run that sync first.
+
+    Synchronous/blocking (network + Mongo I/O) by design — called via
+    asyncio.to_thread from both the REST endpoint (rest_option_chain, below)
+    and the shared background refresh loop (_chain_refresh_loop), so neither
+    blocks the event loop. Takes an already-normalized (uppercased)
+    instrument — callers own that normalization since it's also the cache
+    key both call sites share.
+    """
+    _t0 = time.perf_counter()
+
+    def _lap(label: str) -> None:
+        print(f"[REST-CHAIN TIMING] {normalized}  {label}: {(time.perf_counter() - _t0) * 1000:.0f}ms elapsed", flush=True)
+
+    db = MongoData()
+    today = datetime.now().strftime("%Y-%m-%d")
+    tok_col = db._db["active_option_tokens"]
+    _lap("db_connect")
+
+    expiries = sorted({
+        str(e)[:10]
+        for e in tok_col.distinct(
+            "expiry",
+            {"broker": "dhan", "instrument": normalized, "expiry": {"$gte": today}},
+        )
+        if e
+    })
+    _lap("expiries_query")
+    resolved_expiry = str(expiry or "").strip()[:10] or (expiries[0] if expiries else "")
+    if not resolved_expiry:
+        return {
+            "instrument": normalized, "expiry": "", "expiries": [],
+            "spot_price": 0.0, "lot_size": 0, "chain": {"CE": [], "PE": []},
+            "message": "no contracts found in active_option_tokens — run /algo/get_active_tokens/" + normalized + " first",
+        }
+
+    docs = list(tok_col.find(
+        {"broker": "dhan", "instrument": normalized, "expiry": {"$regex": f"^{resolved_expiry}"}, "option_type": {"$in": ["CE", "PE"]}},
+        {"_id": 0, "token": 1, "tokens": 1, "strike": 1, "option_type": 1, "symbol": 1, "ws_segment": 1, "lot_size": 1, "instrument_type": 1},
+    ))
+    _lap(f"strikes_query (docs={len(docs)})")
+
+    sids_by_segment: dict[str, list[int]] = {}
+    doc_by_sid: dict[str, dict] = {}
+    for d in docs:
+        tok = str(d.get("token") or d.get("tokens") or "").strip()
+        if not tok.isdigit():
+            continue
+        segment = str(d.get("ws_segment") or "NSE_FNO")
+        sids_by_segment.setdefault(segment, []).append(int(tok))
+        doc_by_sid[tok] = d
+
+    # Fast path: read straight from the live ticker's spot_map — instant,
+    # in-memory, zero REST call.
+    spot_price_from_ws = 0.0
+    try:
+        from features.broker_gateway import broker_ticker_manager as _btm
+        spot_price_from_ws = float(_btm.spot_map.get(normalized) or 0.0)
+    except Exception:
+        spot_price_from_ws = 0.0
+    _lap(f"spot_from_ws_spot_map={spot_price_from_ws}")
+
+    # Resolve spot_sec_id/segment regardless of whether spot_price already
+    # came from WS — needed as a key into prev_close_map (previous day's
+    # close) below even when we skip the REST spot-quote call itself.
+    #
+    # is_stock gates which lookup runs FIRST — confirmed live that
+    # _get_dhan_equity_sec_id (Dhan's NSE cash-equity CSV rows) is not
+    # actually scoped to real equities: its own exclusion filter only
+    # drops OPTSTK/OPTIDX/FUTSTK/FUTIDX/etc, not plain "INDEX" rows, so
+    # _get_dhan_equity_sec_id('NIFTY') returns '13' — the SAME security id
+    # as NIFTY's real IDX_I spot token, just miscategorized. Trying the
+    # equity path first for an index therefore doesn't fail (which would
+    # correctly fall through to the index branch) — it "succeeds" with a
+    # coincidentally-valid-looking id, so NIFTY's spot silently got quoted
+    # under NSE_EQ instead of IDX_I and returned a wrong LTP. Checking
+    # instrument_type first and skipping the equity path entirely for
+    # non-stocks avoids relying on that lookup ever failing correctly.
+    is_stock = bool(docs) and str(docs[0].get("instrument_type") or "").strip().lower() == "stock"
+    spot_segment = ""
+    spot_sec_id = ""
+    if is_stock:
+        try:
+            spot_sec_id = _get_dhan_equity_sec_id(normalized)
+            if spot_sec_id:
+                spot_segment = "NSE_EQ"
+        except Exception:
+            spot_sec_id = ""
+    if not spot_sec_id:
+        try:
+            from features.market_feed_tokens import ensure_seeded, get_spot_tokens
+            ensure_seeded(db._db)
+            spot_tokens = get_spot_tokens(db._db, "dhan") or {}
+            idx_sid = next((s for s, u in spot_tokens.items() if u == normalized), None)
+            if idx_sid:
+                spot_sec_id = idx_sid
+                spot_segment = "IDX_I"
+        except Exception:
+            pass
+    # Commodities (MCX options-on-futures, instrument_type "commodity") have
+    # no index/equity spot token anywhere — Dhan doesn't publish a true spot
+    # price for these, only the futures contract itself. Use the nearest
+    # FUTCOM contract's own LTP as the pricing reference instead, same
+    # fallback live_greeks_chain_socket.py's _resolve_spot_price already
+    # uses for this same reason. Was missing entirely from this endpoint
+    # until now — confirmed live: GOLD/CRUDEOIL had no spot_price path at
+    # all (not stock, not a known index, so both branches above left
+    # spot_sec_id empty and the request never priced them).
+    if not spot_sec_id:
+        try:
+            fut_doc = tok_col.find_one(
+                {"broker": "dhan", "instrument": normalized, "option_type": "FUT", "expiry": {"$gte": today}},
+                {"_id": 0, "token": 1, "tokens": 1, "ws_segment": 1},
+                sort=[("expiry", 1)],
+            )
+            if fut_doc:
+                fut_tok = str(fut_doc.get("token") or fut_doc.get("tokens") or "").strip()
+                if fut_tok.isdigit():
+                    spot_sec_id = fut_tok
+                    spot_segment = str(fut_doc.get("ws_segment") or "MCX_COMM")
+        except Exception:
+            pass
+    _lap(f"spot_sec_id_resolved={spot_sec_id} segment={spot_segment} is_stock={is_stock}")
+
+    combined_request: dict[str, list[int]] = {seg: list(sids) for seg, sids in sids_by_segment.items()}
+    if spot_sec_id and (spot_price_from_ws <= 0 or spot_segment == "NSE_EQ"):
+        # Indices: skip the REST call once WS already has spot_price (their
+        # previous_close reliably comes from prev_close_map, confirmed live
+        # for NIFTY/SENSEX). Stocks: always include it even when WS already
+        # has spot_price — needed for ohlc.close below, since prev_close_map
+        # is unreliable for individual NSE_EQ tokens (Dhan doesn't seem to
+        # send RESP_PREV_CLOSE packets for cash-equity subscriptions as
+        # consistently as it does for index/F&O), confirmed live: many
+        # stocks' change_pct stayed 0 with only the prev_close_map + DB
+        # fallback. Still one combined call either way (this rides along
+        # with the chain-quote tokens already in the request).
+        combined_request.setdefault(spot_segment, []).append(int(spot_sec_id))
+
+    all_quotes = _fetch_dhan_market_data_multi_nowait(combined_request, db)
+    _lap("combined_quote_done")
+
+    quotes: dict[str, dict] = {}
+    for segment in sids_by_segment:
+        quotes.update(all_quotes.get(segment, {}))
+
+    spot_price = spot_price_from_ws
+    spot_quote_entry = (all_quotes.get(spot_segment, {}) or {}).get(str(spot_sec_id)) or {}
+    if spot_price <= 0 and spot_sec_id:
+        spot_price = float(spot_quote_entry.get("ltp") or 0.0)
+    _lap(f"spot_resolution_done spot_price={spot_price}")
+
+    # previous_close: prefer Dhan's own RESP_PREV_CLOSE WS packet (in-memory,
+    # populated for these tokens since dhan_ticker.py's _prewarm_all_stock_
+    # spots subscribes with REQ_FULL_SUB, which includes prev-close packets)
+    # — same primary source live_greeks_chain_socket.py's _resolve_previous_
+    # close already uses. That WS packet is unreliable for individual NSE_EQ
+    # (stock) tokens though — confirmed live many stocks' change_pct stayed
+    # 0 with only this + the DB fallback — so for stocks specifically, fall
+    # back to this request's own REST spot quote's ohlc.close next. NOT for
+    # indices: confirmed live that IDX_I's ohlc.close tracks today's
+    # current/live reference, not yesterday's close (the exact bug
+    # live_greeks_chain_socket.py's own _resolve_previous_close docstring
+    # warns about — "made change_pct/change_points round to ~0 every
+    # time" — but that warning is specific to IDX_I; for NSE_EQ, ohlc.close
+    # is the standard previous-day close, confirmed against real values).
+    previous_close = 0.0
+    try:
+        from features.broker_gateway import broker_ticker_manager as _btm2
+        previous_close = float(_btm2.prev_close_map.get(str(spot_sec_id)) or 0.0)
+    except Exception:
+        previous_close = 0.0
+    # DB backfill BEFORE ohlc.close: confirmed live that ohlc.close returns
+    # a non-zero but WRONG value for stocks once market is closed (today's
+    # final print, same as ltp — no way to distinguish "closed, this is
+    # today's close" from "closed, this is still just current price" from
+    # that field alone), which would otherwise short-circuit this chain
+    # before ever reaching the DB's genuine historical close.
+    # option_chain_index_spot does carry real per-stock history (confirmed:
+    # 12 backfilled rows for ADANIGREEN) despite the index-sounding name.
+    if previous_close <= 0:
+        try:
+            day_start = f"{today}T00:00:00"
+            doc = db._db["option_chain_index_spot"].find_one(
+                {"underlying": normalized, "timestamp": {"$lt": day_start}},
+                {"_id": 0, "close": 1, "spot_price": 1},
+                sort=[("timestamp", -1)],
+            ) or {}
+            previous_close = float(doc.get("spot_price") or doc.get("close") or 0.0)
+        except Exception:
+            previous_close = 0.0
+    if previous_close <= 0 and spot_segment in ("NSE_EQ", "MCX_COMM"):
+        # MCX_COMM (commodity futures) added alongside NSE_EQ — same
+        # reasoning: confirmed zero DB backfill for GOLD/CRUDEOIL, and
+        # unlike IDX_I this segment's ohlc.close isn't known to have the
+        # current-price-echo quirk, so it's a reasonable fallback here too.
+        previous_close = float(spot_quote_entry.get("prev_close") or 0.0)
+    change_pct = round((spot_price - previous_close) / previous_close * 100, 2) if previous_close else 0.0
+    change_points = round(spot_price - previous_close, 2) if previous_close else 0.0
+    _lap(f"previous_close_resolved={previous_close}")
+
+    india_vix = 0.0
+    try:
+        vix_doc = (
+            db._db["option_chain_index_spot"].find_one(
+                {"underlying": "INDIAVIX"}, {"_id": 0, "close": 1, "spot_price": 1}, sort=[("timestamp", -1)],
+            )
+            or db._db["option_chain_index_spot"].find_one(
+                {"token": "NSE_00"}, {"_id": 0, "close": 1, "spot_price": 1}, sort=[("timestamp", -1)],
+            )
+            or {}
+        )
+        india_vix = round(float(vix_doc.get("spot_price") or vix_doc.get("close") or 0), 2)
+    except Exception:
+        india_vix = 0.0
+
+    token_ok, token_msg = True, ""
+    try:
+        from features.broker_gateway import get_active_broker_token_status
+        token_ok, token_msg = get_active_broker_token_status()
+    except Exception:
+        pass
+
+    from features.broker_gateway import get_bs_helpers
+    _calc_iv, _calc_greeks, _time_to_expiry, _RISK_FREE_RATE, _DIVIDEND_YIELDS, _DEFAULT_DIVIDEND_YIELD = get_bs_helpers()
+    T = _time_to_expiry(resolved_expiry)
+    r = _RISK_FREE_RATE
+    q_yield = _DIVIDEND_YIELDS.get(normalized, _DEFAULT_DIVIDEND_YIELD)
+
+    chain: dict[str, list[dict]] = {"CE": [], "PE": []}
+    for tok, doc in doc_by_sid.items():
+        side = str(doc.get("option_type") or "").upper()
+        if side not in chain:
+            continue
+        q = quotes.get(tok) or {}
+        ltp = float(q.get("ltp") or 0.0)
+        leg_prev_close = float(q.get("prev_close") or 0.0)
+        if ltp > 0 and spot_price > 0:
+            strike_f = float(doc.get("strike") or 0.0)
+            try:
+                iv = _calc_iv(ltp, spot_price, strike_f, T, r, side, q_yield)
+                greeks = _calc_greeks(spot_price, strike_f, T, r, iv, side, q_yield)
+            except Exception:
+                iv, greeks = 0.0, {"delta": 0.0, "gamma": 0.0, "theta": 0.0, "vega": 0.0}
+        else:
+            iv, greeks = 0.0, {"delta": 0.0, "gamma": 0.0, "theta": 0.0, "vega": 0.0}
+        ltp_change_pct = round((ltp - leg_prev_close) / leg_prev_close * 100, 2) if leg_prev_close else 0.0
+        chain[side].append({
+            "strike":  doc.get("strike"),
+            "token":   tok,
+            "symbol":  str(doc.get("symbol") or ""),
+            "ltp":     ltp,
+            "iv":      round(iv * 100, 2),
+            "delta":   round(greeks.get("delta", 0.0), 4),
+            "gamma":   round(greeks.get("gamma", 0.0), 4),
+            "theta":   round(greeks.get("theta", 0.0), 4),
+            "vega":    round(greeks.get("vega", 0.0), 4),
+            "oi":      int(q.get("oi") or 0),
+            "bid":     float(q.get("bid") or 0.0),
+            "ask":     float(q.get("ask") or 0.0),
+            "oi_change_pct": 0.0,
+            "ltp_change_pct": ltp_change_pct,
+            "volume":  int(q.get("volume") or 0),
+        })
+    for side in chain:
+        chain[side].sort(key=lambda r: r["strike"] or 0)
+    _lap("greeks_computed")
+
+    from collections import Counter as _Counter
+    all_strikes = sorted({float(row.get("strike") or 0) for side in ("CE", "PE") for row in chain.get(side, [])})
+    strike_interval = 0.0
+    if len(all_strikes) >= 2:
+        diffs = [all_strikes[i + 1] - all_strikes[i] for i in range(len(all_strikes) - 1)]
+        strike_interval = float(_Counter(diffs).most_common(1)[0][0])
+    atm_strike = 0.0
+    if all_strikes and spot_price > 0:
+        atm_strike = min(all_strikes, key=lambda s: abs(s - spot_price))
+    elif all_strikes:
+        atm_strike = all_strikes[len(all_strikes) // 2]
+    _lap("TOTAL (response ready)")
+
+    return {
+        "type":        "chain",
+        "instrument":  normalized,
+        "expiry":      resolved_expiry,
+        "expiries":    expiries,
+        "spot_price":  spot_price,
+        "pricing_spot": spot_price,
+        "previous_close": round(previous_close, 2),
+        "change_pct":  change_pct,
+        "change_points": change_points,
+        "atm_strike":  int(atm_strike) if atm_strike == int(atm_strike) else atm_strike,
+        "strike_interval": int(strike_interval) if strike_interval == int(strike_interval) else strike_interval,
+        "india_vix":   india_vix,
+        "lot_size":    int(docs[0].get("lot_size") or 0) if docs else 0,
+        "chain":       chain,
+        "broker_session_expired": not token_ok,
+        "broker_session_message": token_msg if not token_ok else "",
+        "quote_source": "rest",
+    }
+
+
+# ── Shared chain cache + background refresh loop ─────────────────────────────
+# Same principle the WS hub (live_greeks_chain_socket.py) already uses for
+# /ws/live-greeks-chain — "N clients watching the same chain cost one fetch
+# per refresh interval, not N REST calls" — applied here for the plain REST
+# endpoint below. Without this, every single request calls Dhan directly
+# (see _build_chain_payload_sync → _fetch_dhan_market_data_multi_nowait),
+# which is fine for occasional/admin use but cannot survive real concurrent
+# traffic: Dhan's rate limit is per-ACCOUNT (~1 req/1-2s for this whole app,
+# all 5 processes combined — see broker_gateway.py's _DHAN_QUOTE_MIN_INTERVAL),
+# not per-user, so any real number of simultaneous requesters would mostly
+# 429/timeout each other and risk the same account-level block this app hit
+# earlier today from just its own testing traffic.
+#
+# Design: the endpoint never blocks on a fresh Dhan call except the very
+# first time a given (instrument, expiry) pair is ever requested. After
+# that, it's served instantly from _CHAIN_CACHE, which _chain_refresh_loop
+# keeps warm in the background — one Dhan call per *distinct active pair*
+# per refresh cycle, regardless of how many users are reading that pair.
+# Dhan call volume scales with how many different stocks are being watched
+# right now, never with how many users are watching them.
+_CHAIN_CACHE: dict[tuple[str, str], dict] = {}          # (instrument, expiry_hint) -> last built payload
+_CHAIN_CACHE_TS: dict[tuple[str, str], float] = {}      # same key -> time.time() it was last refreshed
+_CHAIN_WATCH_LAST_SEEN: dict[tuple[str, str], float] = {}  # same key -> time.time() it was last requested
+_CHAIN_INFLIGHT: dict[tuple[str, str], asyncio.Task] = {}  # same key -> in-progress first-fetch task, if any
+_CHAIN_WATCH_LOCK = threading.Lock()
+_CHAIN_WATCH_TTL_SECONDS = 180.0   # stop refreshing a pair nobody's asked for in 3 minutes
+_CHAIN_REFRESH_IDLE_SLEEP_SECONDS = 2.0  # poll pace when there's nothing active to refresh
+
+
+async def _chain_refresh_loop() -> None:
+    """
+    Runs forever in the background (started at app startup, see
+    _chain_refresh_loop_startup below). Cycles through every currently-
+    watched (instrument, expiry) pair, refreshing each one's cached payload
+    in turn. Pacing between individual Dhan calls comes from the shared
+    rate gate itself (dhan_quote_post_blocking's wait_for_dhan_slot) — this
+    loop doesn't add its own extra throttle beyond a small yield, since
+    doing so on top of the shared gate would only slow refreshes down
+    further for no benefit.
+    """
+    while True:
+        now = time.time()
+        with _CHAIN_WATCH_LOCK:
+            stale_keys = [k for k, ts in _CHAIN_WATCH_LAST_SEEN.items() if now - ts >= _CHAIN_WATCH_TTL_SECONDS]
+            for k in stale_keys:
+                _CHAIN_WATCH_LAST_SEEN.pop(k, None)
+                _CHAIN_CACHE.pop(k, None)
+                _CHAIN_CACHE_TS.pop(k, None)
+            active_pairs = sorted(_CHAIN_WATCH_LAST_SEEN.keys())
+
+        if not active_pairs:
+            await asyncio.sleep(_CHAIN_REFRESH_IDLE_SLEEP_SECONDS)
+            continue
+
+        for (normalized, expiry_hint) in active_pairs:
+            try:
+                payload = await asyncio.to_thread(_build_chain_payload_sync, normalized, expiry_hint)
+                _CHAIN_CACHE[(normalized, expiry_hint)] = payload
+                _CHAIN_CACHE_TS[(normalized, expiry_hint)] = time.time()
+            except Exception as exc:
+                log.warning("[CHAIN REFRESH LOOP] error pair=%s: %s", (normalized, expiry_hint), exc)
+            await asyncio.sleep(0)  # yield to the event loop between pairs
+
+
+@app.on_event("startup")
+def _chain_refresh_loop_startup() -> None:
+    asyncio.get_event_loop().create_task(_chain_refresh_loop())
+
+
+@app.get("/rest-option-chain/{instrument}")
+async def rest_option_chain(instrument: str, expiry: str = ""):
+    """
+    Thin cache-aware wrapper — see _build_chain_payload_sync for what
+    actually builds the response, and the "Shared chain cache" block above
+    for why this doesn't call Dhan directly on every request.
+
+    _CHAIN_INFLIGHT coalesces concurrent first-requests for the same pair:
+    without it, N simultaneous requests for a brand-new (instrument, expiry)
+    — e.g. many users opening the same never-before-seen stock at once —
+    would each see an empty cache and fire their own Dhan call in parallel,
+    exactly the pile-up this whole cache exists to prevent. Only the first
+    request to arrive actually fetches; every concurrent other one awaits
+    that same in-flight task and shares its result.
+    """
+    normalized = str(instrument or "").strip().upper()
+    if not normalized:
+        raise HTTPException(status_code=400, detail="instrument is required")
+    expiry_hint = str(expiry or "").strip()[:10]
+    key = (normalized, expiry_hint)
+
+    with _CHAIN_WATCH_LOCK:
+        _CHAIN_WATCH_LAST_SEEN[key] = time.time()
+
+    cached = _CHAIN_CACHE.get(key)
+    if cached is not None:
+        return cached
+
+    with _CHAIN_WATCH_LOCK:
+        inflight = _CHAIN_INFLIGHT.get(key)
+        is_fetcher = inflight is None
+        if is_fetcher:
+            inflight = asyncio.get_event_loop().create_task(
+                asyncio.to_thread(_build_chain_payload_sync, normalized, expiry)
+            )
+            _CHAIN_INFLIGHT[key] = inflight
+
+    try:
+        payload = await inflight
+    finally:
+        if is_fetcher:
+            with _CHAIN_WATCH_LOCK:
+                _CHAIN_INFLIGHT.pop(key, None)
+
+    if is_fetcher:
+        _CHAIN_CACHE[key] = payload
+        _CHAIN_CACHE_TS[key] = time.time()
+    return payload
 
 
 

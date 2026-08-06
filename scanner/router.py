@@ -80,6 +80,9 @@ class RunBacktestRequest(BaseModel):
     stock_price_min: Optional[float] = None
     stock_price_max: Optional[float] = None
     score_model: Optional[str] = "current"
+    stoploss_status: bool = False
+    stoploss_percent: Optional[float] = None
+    stoploss_rebalance_timing: str = "same_day"
 
 
 class EodScoringRequest(BaseModel):
