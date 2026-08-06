@@ -7223,8 +7223,6 @@ def _fetch_dhan_market_data_multi_nowait(sids_by_segment: dict[str, list[int]], 
                     continue
                 if r.status_code == 200:
                     raw = r.json()
-                    print(f"[RAW DHAN QUOTE RESPONSE] segments={list(remaining.keys())} "
-                          f"body={json.dumps(raw)}", flush=True)
                     data_by_segment = raw.get("data") or raw
                     for segment in remaining:
                         data = data_by_segment.get(segment) or {}
@@ -7255,6 +7253,31 @@ def _fetch_dhan_market_data_multi_nowait(sids_by_segment: dict[str, list[int]], 
     return result
 
 
+# Confirmed live against Dhan's own published reference
+# (https://dhan.co/commodities-lot-size/, fetched 2026-08-06) — overrides
+# active_option_tokens.lot_size for these, which is unreliable: every MCX
+# commodity in that collection reports "1" regardless of the real contract
+# size (that's the SEM_LOT_UNITS field straight from Dhan's scrip-master
+# CSV, not meant for this). Dhan's own lot-size page itself shows "NA" for
+# several commodities (ALUMINI, ALUMINIUM, CARDAMOM, COTTON, COTTONOIL,
+# ELECDMBL, GOLDGUINEA, GOLDPETAL, GOLDTEN, KAPAS, LEAD, LEADMINI,
+# MENTHAOIL, NICKEL, SILVER100, SILVERMIC, STEELREBAR, ZINCMINI) —
+# deliberately NOT guessing values for those; they fall back to the
+# (known-unreliable) DB value until a real source turns up.
+_COMMODITY_LOT_SIZE_OVERRIDES: dict[str, int] = {
+    "GOLD":        1,      # 1 KGS
+    "GOLDM":       100,    # 100 GRMS
+    "COPPER":      2500,   # 2500 KGS
+    "CRUDEOIL":    100,    # 100 BBL
+    "CRUDEOILM":   10,     # 10 BBL
+    "SILVER":      30,     # 30 KGS
+    "SILVERM":     5,      # 5 KGS
+    "NATURALGAS":  1250,   # 1250 mmBtu
+    "NATGASMINI":  250,    # 250 mmBtu
+    "ZINC":        5,      # 5 MT
+}
+
+
 def _build_chain_payload_sync(normalized: str, expiry: str) -> dict:
     """
     Pure-REST F&O option chain for any Dhan-listed underlying (built for
@@ -7279,10 +7302,8 @@ def _build_chain_payload_sync(normalized: str, expiry: str) -> dict:
     instrument — callers own that normalization since it's also the cache
     key both call sites share.
     """
-    _t0 = time.perf_counter()
-
     def _lap(label: str) -> None:
-        print(f"[REST-CHAIN TIMING] {normalized}  {label}: {(time.perf_counter() - _t0) * 1000:.0f}ms elapsed", flush=True)
+        pass  # timing prints removed — re-add a body here if diagnosing slowness again
 
     db = MongoData()
     today = datetime.now().strftime("%Y-%m-%d")
@@ -7563,7 +7584,7 @@ def _build_chain_payload_sync(normalized: str, expiry: str) -> dict:
         "atm_strike":  int(atm_strike) if atm_strike == int(atm_strike) else atm_strike,
         "strike_interval": int(strike_interval) if strike_interval == int(strike_interval) else strike_interval,
         "india_vix":   india_vix,
-        "lot_size":    int(docs[0].get("lot_size") or 0) if docs else 0,
+        "lot_size":    _COMMODITY_LOT_SIZE_OVERRIDES.get(normalized) or (int(docs[0].get("lot_size") or 0) if docs else 0),
         "chain":       chain,
         "broker_session_expired": not token_ok,
         "broker_session_message": token_msg if not token_ok else "",
