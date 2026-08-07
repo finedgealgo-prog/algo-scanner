@@ -7661,7 +7661,7 @@ def _chain_refresh_loop_startup() -> None:
     asyncio.get_event_loop().create_task(_chain_refresh_loop())
 
 
-@app.get("/rest-option-chain/{instrument}")
+@app.get("/scanner/rest-option-chain/{instrument}")
 async def rest_option_chain(instrument: str, expiry: str = ""):
     """
     Thin cache-aware wrapper — see _build_chain_payload_sync for what
