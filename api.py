@@ -7217,8 +7217,13 @@ def _fetch_dhan_market_data_multi_nowait(sids_by_segment: dict[str, list[int]], 
     if remaining:
         from features.broker_gateway import dhan_quote_post_blocking
         for _attempt in range(2):
+            _attempt_t0 = time.perf_counter()
             try:
                 r = dhan_quote_post_blocking(remaining, access_token, client_id, timeout=15.0)
+                _attempt_ms = (time.perf_counter() - _attempt_t0) * 1000
+                print(f"[DHAN QUOTE MULTI TIMING] segments={list(remaining.keys())} attempt={_attempt} "
+                      f"status={r.status_code if r is not None else 'None'} took={_attempt_ms:.0f}ms "
+                      f"body={r.text[:200] if r is not None and r.status_code != 200 else ''}", flush=True)
                 if r is None:
                     continue
                 if r.status_code == 200:
@@ -7302,8 +7307,10 @@ def _build_chain_payload_sync(normalized: str, expiry: str) -> dict:
     instrument — callers own that normalization since it's also the cache
     key both call sites share.
     """
+    _t0 = time.perf_counter()
+
     def _lap(label: str) -> None:
-        pass  # timing prints removed — re-add a body here if diagnosing slowness again
+        print(f"[REST-CHAIN TIMING] {normalized}  {label}: {(time.perf_counter() - _t0) * 1000:.0f}ms elapsed", flush=True)
 
     db = MongoData()
     today = datetime.now().strftime("%Y-%m-%d")
